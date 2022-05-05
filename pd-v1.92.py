@@ -11,10 +11,11 @@ from binance.client import Client
 
 
 from callDB import get_startDate, put_dateError, get_toggle, get_qty, get_TH_uuid, get_TH_pair, get_TH_orderID
-from CO import futures_order, get_rounded_price, get_tick_size, cancel_order
+from CO import futures_order, get_rounded_price, get_tick_size, cancel_order, check_order
+
 import config
 
-global timeframe, pair, th_orderID
+global th_orderID
 
 class PatternDetect:
     
@@ -68,18 +69,22 @@ class PatternDetect:
             # print("===", curPrice, "===")
             
     async def main(self):
-
+        global pair, timeframe
         i = 0
         while 1 == 1:
             i += 1
             if i == 1:
                 timeframe = "5m"
+                # volume = ""
             elif i == 2:
                 timeframe = "15m"
+                # volume = ""
             elif i == 3:
                 timeframe = "30m"
+                # volume = ""
             elif i ==4:
                 timeframe = "1h"
+                # volume = ""
             else:
                 timeframe = "end"
                 break
@@ -101,21 +106,22 @@ class PatternDetect:
                     get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
                     msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
                     data = self.get_data_frame(symbol=pair, msg=msg)
-                    cc = df["Close"]
-                    close = cc[rows_count - 1]
-                    hh = df["High"]
-                    high = hh[rows_count - 1]
-                                
-                    self.d_RSI()
-                    self.d_SMA()
-
-                    type = "LIMIT"
-                    # type = "MARKET"
 
                     if volume > 1:
 
+                        cc = df["Close"]
+                        close = cc[rows_count - 1]
+                        hh = df["High"]
+                        high = hh[rows_count - 1]
+                                    
+                        self.d_RSI()
+                        self.d_SMA()
+
+                        type = "LIMIT"
+                        # type = "MARKET"
+
                         #Not important on final code
-                        entry_price = 37000.05 
+                        entry_price = 32000.05 
                         entry_price = get_rounded_price(pair, entry_price)
 
                         qty = get_qty(timeframe, pair)
@@ -126,10 +132,10 @@ class PatternDetect:
                         # else:
                         #     side = "SELL"
                         
+                        print("%(h)s \nVolume: %(c)s \nHigh: %(a)s Close: %(b)s \nRSI: %(e)s SMA: %(f)s \nQTY: %(g)s \nSIDE: %(i)s" % 
+                            {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'h': get_startDate, 'i':side})
                         futures_order(pair, qty, entry_price, side, type, close, high)
-                        print("Date/Time: %(h)s Volume: %(c)s High: %(a)s Close: %(b)s RSI: %(e)s SMA: %(f)s QTY: %(g)s" % 
-                            {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'h': get_startDate})
-
+                        
                     await client.close_connection()
                     break
 
@@ -158,9 +164,14 @@ if __name__ == '__main__':
         print(minute, ":", second)
         second += 1
 
-        # pattern_detect = PatternDetect()
-        # asyncio.get_event_loop().run_until_complete(pattern_detect.main())
-        # quit()
+        pattern_detect = PatternDetect()
+        asyncio.get_event_loop().run_until_complete(pattern_detect.main())
+        # check_order("1234")
+        # uuid = get_TH_uuid()
+        # pair = get_TH_pair(uuid)
+        # orderID = get_TH_orderID(uuid)
+        # cancel_order(orderID, pair)        
+        quit()
 
         #ENTRY
         if int(repr(minute)[-1]) == 5 and second == 1: #5m
@@ -198,7 +209,7 @@ if __name__ == '__main__':
             pattern_detect = PatternDetect()
             asyncio.get_event_loop().run_until_complete(pattern_detect.main())            
             uuid = get_TH_uuid()
-            pair = get_TH_pair(uuid)
+            # pair = get_TH_pair(uuid)
             orderID = get_TH_orderID(uuid)
             cancel_order(orderID, pair)
 

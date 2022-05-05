@@ -160,10 +160,10 @@ if __name__ == '__main__':
 
         pattern_detect = PatternDetect()
         asyncio.get_event_loop().run_until_complete(pattern_detect.main())
-        # uuid = get_TH_uuid()
-        # pair = get_TH_pair(uuid)
-        # orderID = get_TH_orderID(uuid)
-        # cancel_order(orderID, pair)
+        uuid = get_TH_uuid()
+        pair = get_TH_pair(uuid)
+        orderID = get_TH_orderID(uuid)
+        cancel_order(orderID, pair)
         quit()
         #ENTRY
         if int(repr(minute)[-1]) == 5 and second == 1: #5m

@@ -4,22 +4,24 @@ import mysql.connector
 from mysql.connector import errorcode
 
 import config
-    
-def get_toggle(timeframe):
+
+
+def get_toggle():
     
     get_cnx()
     cursor = cnx.cursor(dictionary=True)
 
     try:
-        cursor.execute("SELECT pair FROM settings WHERE timeframe='" + timeframe + "' AND toggle='1'")
-        myresult = cursor.fetchall()
-        # print(myresult)
+        cursor.execute("SELECT timeframe, pair, qty, volume, timedelta FROM settings WHERE toggle='1'")
+        toggle = cursor.fetchall()
         cnx.close()
-        # print("-MySQL connection closed-")
-        return myresult
+
+        return toggle
 
     except:
         cnx.close()
+
+#====================
 
 def get_status(timeframe):
     
@@ -119,26 +121,22 @@ def put_dateError(timeframe, pair):
     
     cnx.close()
 
-def put_orderID(orderId, qty, entryPrice, status, close_pos):
-    
+def put_orderID(orderId, entryPrice, qty, status, take_profit, orderIdTP):
+
     get_cnx()
-    cursor = cnx.cursor(dictionary=True)
-    # cursor.execute("INSERT order_entry SET Error='1', toggle='0' WHERE '")
-    sql = """INSERT IGNORE INTO order_entry(
-      orderId, qty, entryPrice, status, close_pos)
-      VALUES (""" + "'" + orderId + "','" + qty + "','" + entryPrice + "','" + status + "','" + close_pos + "')"
+    cursor = cnx.cursor()
 
-    try:
-      cursor.execute(sql)
-      cnx.commit()
+    query = """INSERT IGNORE INTO order_entry (orderId, qty, entryPrice, status, close_pos, orderIdTP) VALUES (%s, %s, %s, %s, %s, %s)"""
 
-    except:
-      cnx.rollback()
+    values = (int(orderId), float(qty), float(entryPrice), int(status), float(take_profit), int(orderIdTP))
 
-    sql = '''SELECT * from order_entry'''
-    cursor.execute(sql)
-    print(cursor.fetchall())
+    cursor.execute(query, values)
+        
+    cnx.commit()
+    cursor.close()
     cnx.close()
+    print("Completed")
+
 
 def get_cnx():
     global cnx

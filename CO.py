@@ -1,10 +1,12 @@
-import time
+from datetime import datetime, timedelta
+
 from binance.client import Client
 import config
 
 from binance.enums import *
 from binance.exceptions import BinanceAPIException, BinanceOrderException
 from callDB import put_orderID
+from TH import insert_TH
 
 from binance.helpers import round_step_size
 
@@ -60,10 +62,12 @@ def futures_order(pair, qty, entry_price, side, type, high, close):
                 price=entry_price)
 
         orderId = order["orderId"]
+        market_price = order["price"]
 
         tp1 = high - close
         tp2 = tp1 * 0.30
-        take_profit = round(close + tp2, 6)
+        # take_profit = round(close + tp2, 6)
+        take_profit = 41000.01
 
         if side == "BUY":
             side = "SELL"
@@ -81,9 +85,16 @@ def futures_order(pair, qty, entry_price, side, type, high, close):
             reduceOnly=True,
             workingType= 'MARK_PRICE')
 
-        orderId2 = order2["orderId"]
-        # put_orderID(orderId)
-        print("Order#1: %(n)s Order#2: %(b)s" % {'n': orderId, 'b': orderId2})
+        orderIdTP = order2["orderId"]
+        status = 1
+        put_orderID(orderId, market_price, qty, status, take_profit, orderIdTP)
+
+        last_hour_date_time = datetime.now() - timedelta(hours = 24)
+        get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+        insert_TH(get_startDate)
+
+        print("\nOrder_Position: %(n)s \nOrderIdTP: %(b)s \nMarket Price: %(c)s \nStatus: %(d)s \nTake Profit: %(e)s \nQuantity: %(f)s" % 
+            {'n': orderId, 'b': orderIdTP, 'c': market_price, 'd': status, 'e': take_profit, 'f': qty})
 
     except BinanceAPIException as e:
         print(e)
@@ -96,27 +107,25 @@ def futures_order(pair, qty, entry_price, side, type, high, close):
 # {'orderId': 51740849852, 'symbol': 'BTCUSDT', 'status': 'NEW', 'clientOrderId': 'yBzqOwb4TCJcacDBVXmASM', 'price': '37000.10', 
 # 'avgPrice': '0.00000', 'origQty': '0.002', 'executedQty': '0', 'cumQty': '0', 'cumQuote': '0', 'timeInForce': 'GTC', 'type': 'LIMIT', 
 # 'reduceOnly': False, 'closePosition': False, 'side': 'BUY', 'positionSide': 'BOTH', 'stopPrice': '0', 'workingType': 'CONTRACT_PRICE', 
-# 'priceProtect': False, 'origType': 'LIMIT', 'updateTime': 1651089447160}      
-    # if order['status'] == "NEW":
-    #     time.sleep(5)#   
-        # try:                    
-        #     result = client.futures_get_order(
-        #         symbol=pair,
-        #         orderId=order['orderId'],
-        #         qq=order['origQty'],
-        #         pp=order['price'])
-            
-        #     print("orderId:" + order['orderId'], "origQty:" + order['origQty'], "Price:" + order['price'])
-        #     quit()
-        #     # Insert to DB
-            
-        # except BinanceAPIException as e:
-        #     print(e)
-        #     print("check order1")
+# 'priceProtect': False, 'origType': 'LIMIT', 'updateTime': 1651089447160}
 
-        # except BinanceOrderException as e:
-        #     print(e)
-        #     print("check order2")
+def check_order(orderId):
+
+    try:                    
+        result = client.futures_get_order(
+            orderId=orderId)        
+
+        # Insert to DB
+        print(result['orderId'])
+        quit()
+        
+    except BinanceAPIException as e:
+        print(e)
+        print("No order(s) found.")
+
+    except BinanceOrderException as e:
+        print(e)
+        print("check order2")
 
     # ===========================================================================================
 

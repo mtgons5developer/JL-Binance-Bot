@@ -1,18 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import time
-import talib
-import asyncio
-import pandas as pd
 import subprocess
 
-
-from binance.client import AsyncClient
 from binance.client import Client
-
-
-from callDB import get_startDate, put_dateError, get_toggle, get_TH_uuid, get_TH_pair, get_TH_orderID
-from CO import futures_order, get_rounded_price, get_tick_size, cancel_order, check_order
 
 import config
 

@@ -10,7 +10,7 @@ from binance.client import AsyncClient
 from binance.client import Client
 
 
-from callDB import get_startDate, put_dateError, get_toggle, get_qty, get_TH_uuid, get_TH_pair, get_TH_orderID
+from callDB import get_startDate, put_dateError, get_toggle, get_qty, get_TH_uuid, get_TH_pair, get_TH_orderID, get_tf
 from CO import futures_order, get_rounded_price, get_tick_size, cancel_order, check_order
 
 import config
@@ -73,27 +73,33 @@ class PatternDetect:
         i = 0
         while 1 == 1:
             i += 1
-            if i == 1:
-                timeframe = "5m"
-                # volume = ""
-            elif i == 2:
-                timeframe = "15m"
-                # volume = ""
-            elif i == 3:
-                timeframe = "30m"
-                # volume = ""
-            elif i ==4:
-                timeframe = "1h"
-                # volume = ""
-            else:
-                timeframe = "end"
-                break
+            # if i == 1:
+            #     timeframe = "5m"
+            #     # volume = ""
+            # elif i == 2:
+            #     timeframe = "15m"
+            #     # volume = ""
+            # elif i == 3:
+            #     timeframe = "30m"
+            #     # volume = ""
+            # elif i == 4:
+            #     timeframe = "1h"
+            #     # volume = ""
+            # else:
+            #     timeframe = "end"
+            #     break
+            
+            timeframe = get_tf()
+            # timeframe = timeframe['timeframe']
+            print(timeframe)
+            result = get_toggle()
 
-            result = get_toggle(timeframe)
             num = 0
             for x in result:
                 num += 1    
 
+            print(num)
+            quit()
             ii = 0
             while ii < num:
                 ii += 1
@@ -109,13 +115,13 @@ class PatternDetect:
 
                     if volume > 1:
 
+                        self.d_RSI()
+                        self.d_SMA()
+
                         cc = df["Close"]
                         close = cc[rows_count - 1]
                         hh = df["High"]
-                        high = hh[rows_count - 1]
-                                    
-                        self.d_RSI()
-                        self.d_SMA()
+                        high = hh[rows_count - 1]                               
 
                         type = "LIMIT"
                         # type = "MARKET"
@@ -127,24 +133,28 @@ class PatternDetect:
                         qty = get_qty(timeframe, pair)
                         
                         side = "BUY"
-                        # if curPrice > close and sma > curPrice and rsi > 0 and rsi < 0:
-                        #     side = "BUY"
-                        # else:
-                        #     side = "SELL"
+                        if curPrice > close and sma > curPrice and rsi > 0 and rsi < 0:
+                            side = "BUY"
+                        else:
+                            side = "SELL"
                         
                         print("%(h)s \nVolume: %(c)s \nHigh: %(a)s Close: %(b)s \nRSI: %(e)s SMA: %(f)s \nQTY: %(g)s \nSIDE: %(i)s" % 
                             {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'h': get_startDate, 'i':side})
-                        futures_order(pair, qty, entry_price, side, type, close, high)
+                        # futures_order(pair, qty, entry_price, side, type, close, high)
                         
                     await client.close_connection()
-                    break
+                    # break
 
                 except:
                     print("No Action(s) for " + timeframe)
                     await client.close_connection()
             
+            if ii == num: break
+
             else:
                 continue
+            
+            
 
 if __name__ == '__main__':
 

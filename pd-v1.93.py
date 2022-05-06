@@ -43,7 +43,7 @@ class PatternDetect:
 #=====================================================================================================================
 
     def d_RSI(self):
-        global rsi
+        global rsi, error_set
 
         rsi = talib.RSI(df["Close"])
         rw = len(df.index)
@@ -51,13 +51,14 @@ class PatternDetect:
         rsi = round(float(tt))
     
         if tt == "nan":
-            print("ERROR RSI")
+            print("\n ERROR deltatime adjust to a higher value\n")
             put_dateError(timeframe, pair)
+            error_set = 1
 
 #=====================================================================================================================
 
     def d_SMA(self):
-        global curPrice, sma
+        global curPrice, sma, error_set
 
         sma = talib.SMA(df['Close'])
         rw = len(df.index)
@@ -66,14 +67,16 @@ class PatternDetect:
         curPrice = df['Close'].iloc[-1]
         
         if tt == "nan":
-            print("ERROR SMA")
+            print("\nERROR deltatime adjust to a higher value\n")
             put_dateError(timeframe, pair)
+            error_set = 1
 
 #=====================================================================================================================
 
     async def main(self):
-        global pair, timeframe
-            
+        global pair, timeframe, error_set
+        
+        error_set = 0
         result = get_toggle()
 
         yy = 0
@@ -86,7 +89,7 @@ class PatternDetect:
             pair = x['pair']
             timeframe = x['timeframe']
             qty = x['qty']
-            deltatime = x['timedelta']
+            deltatime = x['deltatime']
             volume_set = x['volume']
             
             try:
@@ -98,35 +101,39 @@ class PatternDetect:
                 msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
                 data = self.get_data_frame(symbol=pair, msg=msg)
 
-                if volume > volume_set:
+                self.d_RSI()
+                self.d_SMA()    
 
-                    self.d_RSI()
-                    self.d_SMA()                            
+                if volume > volume_set and error_set == 0:                        
 
                     type = "LIMIT"
                     # type = "MARKET"
 
                     #Not important on final code
-                    entry_price = 32000.05 
-                    entry_price = get_rounded_price(pair, entry_price)
-                    
+                    if pair == "BTCUSDT":
+                        entry_price = 32000.05 
+                        entry_price = get_rounded_price(pair, entry_price)
+                    elif pair == "ETHUSDT":
+                        entry_price = 2000.05 
+                        entry_price = get_rounded_price(pair, entry_price)                        
+                    elif pair == "BNBUSDT":
+                        entry_price = 300.05 
+                        entry_price = get_rounded_price(pair, entry_price)   
+
                     side = "BUY"
-                    if curPrice > close and sma > curPrice and rsi > 0 and rsi < 0:
-                        side = "BUY"
-                    else:
-                        side = "SELL"
+                    # if curPrice > close and sma > curPrice and rsi > 0 and rsi < 0:
+                    #     side = "BUY"
+                    # else:
+                    #     side = "SELL"
                     
-                    print("%(h)s \nVolume: %(c)s \nHigh: %(a)s Close: %(b)s Current Price: %(d)s \nRSI: %(e)s SMA: %(f)s \nQTY: %(g)s \nSIDE: %(i)s" % 
+                    print("%(h)s \nVolume: %(c)s \nHigh: %(a)s Close: %(b)s Current Price: %(d)s \nRSI: %(e)s SMA: %(f)s \nQTY: %(g)s \nSIDE: %(i)s \n" % 
                         {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'h': get_startDate, 'i':side})
                     # futures_order(pair, qty, entry_price, side, type, close, high)
                     
-                await client.close_connection()
+                await client.clos_econnection()
 
-            except:
-                print("No Action(s) for " + timeframe)
-                await client.close_connection()
+            except: await client.close_connection()
 
-            if xx == yy: break
             
 #=====================================================================================================================
 
@@ -139,13 +146,14 @@ if __name__ == '__main__':
     t2 = int(t1)
     server_time = datetime.fromtimestamp(t2).strftime('%Y-%m-%d %H:%M:%S')
     datetime_object = datetime.strptime(server_time, '%Y-%m-%d %H:%M:%S')
+    print(datetime_object)
     hour = datetime_object.strftime("%H")
     minute = int(datetime_object.strftime("%M"))
     second = int(datetime_object.strftime("%S"))  
 
     while 1 == 1: 
         # timer = minute + ":" + second
-        print(minute, ":", second)
+        # print(minute, ":", second)
         second += 1
 
         pattern_detect = PatternDetect()
@@ -155,15 +163,15 @@ if __name__ == '__main__':
         # pair = get_TH_pair(uuid)
         # orderID = get_TH_orderID(uuid)
         # cancel_order(orderID, pair)        
-        quit()
+        # quit()
 
         #ENTRY
         if int(repr(minute)[-1]) == 5 and second == 1: #5m
             print("ENTRY 5m")
             print(minute, ":", second)
             #detect toggled at 5m
-            pattern_detect = PatternDetect()
-            asyncio.get_event_loop().run_until_complete(pattern_detect.main())
+            # pattern_detect = PatternDetect()
+            # asyncio.get_event_loop().run_until_complete(pattern_detect.main())
 
         # if int(repr(minute)[-1]) == 0 and second == 1: #5m
         #     print("ENTRY 5m")
@@ -224,4 +232,13 @@ if __name__ == '__main__':
         if minute == 60:
             minute = 0
 
+        info = client.get_server_time()
+        ts = str(info["serverTime"])
+        t1 = ts[:-3]
+        t2 = int(t1)
+        server_time = datetime.fromtimestamp(t2).strftime('%Y-%m-%d %H:%M:%S')
+        datetime_object = datetime.strptime(server_time, '%Y-%m-%d %H:%M:%S')
+        print(datetime_object)
+        quit()
+        
         time.sleep(1)

@@ -41,6 +41,31 @@ def futures_order(pair, qty, entry_price, side, type, high, close):
 #     "workingType": "CONTRACT_PRICE",
 #     "priceProtect": false            // if conditional order trigger is protected   
 
+    if pair == "BTCUSDT":            
+        take_profit = 41000.01
+        entry_price = 32000
+    if pair == "ETHUSDT":            
+        take_profit = 3000.01
+        entry_price = 2000
+    if pair == "BNBUSDT":            
+        take_profit = 400.01
+        entry_price = 200
+    if pair == "BCHUSDT":            
+        take_profit = 400.01
+        entry_price = 200
+    if pair == "XRPUSDT":            
+        take_profit = 0.7
+        entry_price = 0.4
+    if pair == "EOSUSDT":            
+        take_profit = 3.01
+        entry_price = 1
+    if pair == "LTCUSDT":            
+        take_profit = 200.01
+        entry_price = 50
+    if pair == "TRXUSDT":            
+        take_profit = 0.09
+        entry_price = 0.05
+
     try:
         if type == "MARKET":
             order = client.futures_create_order(
@@ -67,8 +92,7 @@ def futures_order(pair, qty, entry_price, side, type, high, close):
         tp1 = high - close
         tp2 = tp1 * 0.30
         # take_profit = round(close + tp2, 6)
-        take_profit = 41000.01
-
+                                                                                    
         if side == "BUY":
             side = "SELL"
         else:

@@ -12,7 +12,7 @@ def get_toggle():
     cursor = cnx.cursor(dictionary=True)
 
     try:
-        cursor.execute("SELECT timeframe, pair, qty, volume, timedelta FROM settings WHERE toggle='1'")
+        cursor.execute("SELECT timeframe, pair, qty, volume, deltatime FROM settings WHERE toggle='1'")
         toggle = cursor.fetchall()
         cnx.close()
 
@@ -112,7 +112,7 @@ def put_dateError(timeframe, pair):
     
     get_cnx()
     cursor = cnx.cursor(dictionary=True)
-    cursor.execute("UPDATE settings SET Error='1', toggle='0' WHERE timeframe='" + timeframe  + "' AND Pair='" + pair + "'")
+    cursor.execute("UPDATE settings SET Error='ERROR deltatime adjust to a higher value', toggle='0' WHERE timeframe='" + timeframe  + "' AND Pair='" + pair + "'")
 
     try:
         cnx.commit()

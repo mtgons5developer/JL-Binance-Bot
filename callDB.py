@@ -5,14 +5,13 @@ from mysql.connector import errorcode
 
 import config
 
-
 def get_toggle():
     
     get_cnx()
     cursor = cnx.cursor(dictionary=True)
 
     try:
-        cursor.execute("SELECT timeframe, pair, qty, vol, delta FROM settings WHERE toggle='1'")
+        cursor.execute("SELECT timeframe, pair, qty, vol, delta, deltaRSI, deltaSMA, rsiLong, rsiShort  FROM settings WHERE toggle='1'")
         toggle = cursor.fetchall()
         cnx.close()
 
@@ -112,7 +111,7 @@ def put_dateErrorSMA(deltatime, pair):
     
     get_cnx()
     cursor = cnx.cursor(dictionary=True)
-    cursor.execute("UPDATE settings SET Error='SMA ERROR deltatime adjust to a higher value', toggle='0' WHERE delta='" + deltatime  + "' AND Pair='" + pair + "'")
+    cursor.execute("UPDATE settings SET Error='SMA Add more DF.', toggle='0' WHERE delta='" + deltatime  + "' AND pair='" + pair + "'")
 
     try:
         cnx.commit()
@@ -125,7 +124,7 @@ def put_dateErrorRSI(deltatime, pair):
     
     get_cnx()
     cursor = cnx.cursor(dictionary=True)
-    cursor.execute("UPDATE settings SET Error='RSI ERROR deltatime adjust to a higher value', toggle='0' WHERE delta='" + deltatime  + "' AND Pair='" + pair + "'")
+    cursor.execute("UPDATE settings SET Error='RSI Add more DF.', toggle='0' WHERE delta='" + deltatime  + "' AND pair='" + pair + "'")
 
     try:
         cnx.commit()

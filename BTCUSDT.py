@@ -132,7 +132,6 @@ class PatternDetect:
                     await client.clos_econnection()
 
                 except: await client.close_connection()
-
             
 #=====================================================================================================================
 

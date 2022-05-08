@@ -124,7 +124,7 @@ class PatternDetect:
                         
                         print("%(h)s \nVolume: %(c)s \nHigh: %(a)s Close: %(b)s Current Price: %(d)s \nRSI: %(e)s SMA: %(f)s \nQTY: %(g)s \nSIDE: %(i)s \n" % 
                             {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'h': get_startDate, 'i':side})
-                        futures_order(pair, qty, entry_price, side, type, close, high)
+                        # futures_order(pair, qty, entry_price, side, type, close, high)
                         
                     await client.clos_econnection()
 

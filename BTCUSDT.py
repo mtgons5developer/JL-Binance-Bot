@@ -10,7 +10,7 @@ from binance.client import AsyncClient
 from binance.client import Client
 
 
-from callDB import get_startDate, put_dateError, get_toggle, get_TH_uuid, get_TH_pair, get_TH_orderID
+from callDB import get_startDate, put_dateErrorRSI, put_dateErrorSMA, get_toggle, get_TH_uuid, get_TH_pair, get_TH_orderID
 from CO import futures_order, get_rounded_price, get_tick_size, cancel_order, check_order
 
 import config
@@ -51,8 +51,8 @@ class PatternDetect:
         rsi = round(float(tt))
     
         if tt == "nan":
-            print("\n ERROR deltatime adjust to a higher value\n")
-            put_dateError(timeframe, pair)
+            print("\n RSI: ERROR deltatime adjust to a higher value\n")
+            put_dateErrorRSI(deltatime, pair)
             error_set = 1
 
 #=====================================================================================================================
@@ -67,14 +67,15 @@ class PatternDetect:
         curPrice = df['Close'].iloc[-1]
         
         if tt == "nan":
-            print("\nERROR deltatime adjust to a higher value\n")
-            put_dateError(timeframe, pair)
+            print("\n SMA: ERROR deltatime adjust to a higher value\n")
+            print(deltatime, pair)
+            put_dateErrorSMA(deltatime, pair)
             error_set = 1
 
 #=====================================================================================================================
 
     async def main(self):
-        global pair, timeframe, error_set
+        global pair, timeframe, error_set, deltatime
         
         error_set = 0
         result = get_toggle()
@@ -82,16 +83,17 @@ class PatternDetect:
         yy = 0
         for y in result:
             yy += 1   
-
+            print(y)
+        
         xx = 0
         for x in result:
             xx += 1   
             pair = x['pair']
             timeframe = x['timeframe']
             qty = x['qty']
-            deltatime = x['deltatime']
-            volume_set = x['volume']
-            
+            deltatime = x['delta']
+            volume_set = x['vol']
+
             if pair == "BTCUSDT":
 
                 try:
@@ -103,28 +105,29 @@ class PatternDetect:
                     msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
                     data = self.get_data_frame(symbol=pair, msg=msg) 
 
-                    if volume > volume_set and error_set == 0:
-
+                    if volume >= volume_set:
+                        print("Passed")
                         self.d_RSI()
                         self.d_SMA()   
 
-                        type = "LIMIT"
-                        # type = "MARKET"
+                        if error_set == 0:
+                            type = "LIMIT"
+                            # type = "MARKET"
 
-                        #Not important on final code
-                        if pair == "BTCUSDT":
-                            entry_price = 32000.05 
-                            entry_price = get_rounded_price(pair, entry_price)
+                            #Not important on final code
+                            if pair == "BTCUSDT":
+                                entry_price = 32000.05 
+                                entry_price = get_rounded_price(pair, entry_price)
 
-                        side = "BUY"
-                        # if curPrice > close and sma > curPrice and rsi > 0 and rsi < 0:
-                        #     side = "BUY"
-                        # else:
-                        #     side = "SELL"
-                        
-                        print("%(h)s \nVolume: %(c)s \nHigh: %(a)s Close: %(b)s Current Price: %(d)s \nRSI: %(e)s SMA: %(f)s \nQTY: %(g)s \nSIDE: %(i)s \n" % 
-                            {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'h': get_startDate, 'i':side})
-                        futures_order(pair, qty, entry_price, side, type, close, high)
+                            side = "BUY"
+                            # if curPrice > close and sma > curPrice and rsi > 0 and rsi < 0:
+                            #     side = "BUY"
+                            # else:
+                            #     side = "SELL"
+                            
+                            print("%(h)s \nVolume: %(c)s \nHigh: %(a)s Close: %(b)s Current Price: %(d)s \nRSI: %(e)s SMA: %(f)s \nQTY: %(g)s \nSIDE: %(i)s \n" % 
+                                {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'h': get_startDate, 'i':side})
+                            # futures_order(pair, qty, entry_price, side, type, close, high)
                         
                     await client.clos_econnection()
 

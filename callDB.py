@@ -12,7 +12,7 @@ def get_toggle():
     cursor = cnx.cursor(dictionary=True)
 
     try:
-        cursor.execute("SELECT timeframe, pair, qty, volume, deltatime FROM settings WHERE toggle='1'")
+        cursor.execute("SELECT timeframe, pair, qty, vol, delta FROM settings WHERE toggle='1'")
         toggle = cursor.fetchall()
         cnx.close()
 
@@ -108,11 +108,24 @@ def get_startDate(timeframe):
     # print("startDate:", startDate)
     return startDate
 
-def put_dateError(timeframe, pair):
+def put_dateErrorSMA(deltatime, pair):
     
     get_cnx()
     cursor = cnx.cursor(dictionary=True)
-    cursor.execute("UPDATE settings SET Error='ERROR deltatime adjust to a higher value', toggle='0' WHERE timeframe='" + timeframe  + "' AND Pair='" + pair + "'")
+    cursor.execute("UPDATE settings SET Error='SMA ERROR deltatime adjust to a higher value', toggle='0' WHERE delta='" + deltatime  + "' AND Pair='" + pair + "'")
+
+    try:
+        cnx.commit()
+    except:
+        cnx.rollback()
+    
+    cnx.close()
+
+def put_dateErrorRSI(deltatime, pair):
+    
+    get_cnx()
+    cursor = cnx.cursor(dictionary=True)
+    cursor.execute("UPDATE settings SET Error='RSI ERROR deltatime adjust to a higher value', toggle='0' WHERE delta='" + deltatime  + "' AND Pair='" + pair + "'")
 
     try:
         cnx.commit()

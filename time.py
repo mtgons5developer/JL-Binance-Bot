@@ -5,16 +5,17 @@ import config
 
 client = Client(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
 
-# acc_balance = client.futures_account_balance()
+acc_balance = client.futures_account_balance()
 
-# for check_balance in acc_balance:
-#     if check_balance["asset"] == "USDT":
-#         usdt_balance = check_balance["balance"]
-#         print(round(float(usdt_balance), 4))
+for check_balance in acc_balance:
+    if check_balance["asset"] == "USDT":
+        usdt_balance = check_balance["balance"]
+        print(round(float(usdt_balance), 4))
 
-# acc_balance = client.NewGetPositionRiskService().Do(ctx)
+dd = round(float(usdt_balance), 4)
+print(round(((dd / 33500.01) * 0.25), 6))
 
-# quit()
+quit()
 
 info = client.get_server_time()
 print(type(info["serverTime"]))

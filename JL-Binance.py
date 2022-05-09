@@ -15,6 +15,14 @@ def main():
 
     subprocess.run("python3 BTCUSDT.py", shell=True)
 
+# https://stackoverflow.com/questions/1724693/find-a-file-in-python
+# import os
+
+# def find(name, path):
+#     for root, dirs, files in os.walk(path):
+#         if name in files:
+#             return os.path.join(root, name)
+
 #=====================================================================================================================
 
 if __name__ == '__main__':

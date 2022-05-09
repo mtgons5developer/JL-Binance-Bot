@@ -11,7 +11,7 @@ def get_toggle():
     cursor = cnx.cursor(dictionary=True)
 
     try:
-        cursor.execute("SELECT timeframe, pair, qty, vol, delta, deltaRSI, deltaSMA, rsiLong, rsiShort  FROM settings WHERE toggle='1'")
+        cursor.execute("SELECT timeframe, pair, qty, vol, deltaRSI, deltaSMA, rsiLong, rsiShort  FROM settings WHERE toggle='1'")
         toggle = cursor.fetchall()
         cnx.close()
 
@@ -107,11 +107,11 @@ def get_startDate(timeframe):
     # print("startDate:", startDate)
     return startDate
 
-def put_dateErrorSMA(deltatime, pair):
+def put_dateErrorSMA(timeframe, pair):
     
     get_cnx()
     cursor = cnx.cursor(dictionary=True)
-    cursor.execute("UPDATE settings SET Error='SMA Add more DF.', toggle='0' WHERE delta='" + deltatime  + "' AND pair='" + pair + "'")
+    cursor.execute("UPDATE settings SET Error='SMA Add more DF.', toggle='2' WHERE timeframe='" + timeframe  + "' AND pair='" + pair + "'")
 
     try:
         cnx.commit()
@@ -120,11 +120,24 @@ def put_dateErrorSMA(deltatime, pair):
     
     cnx.close()
 
-def put_dateErrorRSI(deltatime, pair):
+def put_dateErrorRSI(timeframe, pair):
     
     get_cnx()
     cursor = cnx.cursor(dictionary=True)
-    cursor.execute("UPDATE settings SET Error='RSI Add more DF.', toggle='0' WHERE delta='" + deltatime  + "' AND pair='" + pair + "'")
+    cursor.execute("UPDATE settings SET Error='RSI Add more DF.', toggle='2' WHERE timeframe='" + timeframe  + "' AND pair='" + pair + "'")
+
+    try:
+        cnx.commit()
+    except:
+        cnx.rollback()
+    
+    cnx.close()
+
+def put_dateErrorPair(timeframe, pair):
+    
+    get_cnx()
+    cursor = cnx.cursor(dictionary=True)
+    cursor.execute("UPDATE settings SET Error='Duplicate pair detected.', toggle='2' WHERE timeframe='" + timeframe  + "' AND pair='" + pair + "'")
 
     try:
         cnx.commit()

@@ -2,7 +2,6 @@ from datetime import datetime
 
 import time
 import subprocess
-from unittest.case import _BaseTestCaseContext
 
 from binance.client import Client
 
@@ -10,10 +9,10 @@ import config
 
 def main():
 
-    # subprocess.run("python3 ETHUSDT.py & python3 BTCUSDT.py & python3 BNBUSDT.py & " + 
-    #     "python3 BCHUSDT.py & python3 XRPUSDT.py & python3 EOSUSDT.py & python3 LTCUSDT.py & python3 TRXUSDT.py", shell=True)
+    subprocess.run("python3 ETHUSDT.py & python3 BTCUSDT.py & python3 BNBUSDT.py & " + 
+        "python3 BCHUSDT.py & python3 XRPUSDT.py & python3 EOSUSDT.py & python3 LTCUSDT.py & python3 TRXUSDT.py", shell=True)
 
-    subprocess.run("python3 BTCUSDT.py", shell=True)
+    # subprocess.run("python3 BTCUSDT.py", shell=True)
 
 # https://stackoverflow.com/questions/1724693/find-a-file-in-python
 # import os

@@ -9,11 +9,12 @@ import numpy as np
 from binance.client import AsyncClient
 from binance.client import Client
 
-
-from callDB import get_startDate, put_dateErrorRSI, put_dateErrorSMA, get_toggle, get_TH_uuid, get_TH_pair, get_TH_orderID, put_dateErrorPair
-from CO import futures_order, get_rounded_price, get_tick_size, cancel_order, check_order
-
 import config
+import callDB
+import CO
+
+db = callDB.call()
+CreateOrder = CO.call()
 
 class PatternDetect:
     
@@ -52,7 +53,7 @@ class PatternDetect:
     
         if tt == "nan":
             print("\n RSI: ERROR deltatime adjust to a higher value\n")
-            put_dateErrorRSI(deltaRSI, pair)
+            db.put_dateErrorRSI(deltaRSI, pair)
             error_set = 1
 
 #=====================================================================================================================
@@ -68,7 +69,7 @@ class PatternDetect:
         
         if tt == "nan":
             print("\n SMA: ERROR deltatime adjust to a higher value\n")
-            put_dateErrorSMA(deltaSMA, pair)
+            db.put_dateErrorSMA(deltaSMA, pair)
             error_set = 1
 
 #=====================================================================================================================
@@ -78,15 +79,15 @@ class PatternDetect:
         
         error_set = 0
         error_set2 = 0
-        result = get_toggle()
+        result = db.get_toggle()
 
         yy = 0
         for y in result:
-            yy += 1   
+            yy += 1
 
         xx = 0
         for x in result:
-            xx += 1   
+            xx += 1
             pair = x['pair']
             timeframe = x['timeframe']
             qty = x['qty']
@@ -99,12 +100,12 @@ class PatternDetect:
 
             if yy > 1:
                 if xx == 1:
-                    put_dateErrorPair(timeframe, pair)
+                    db.put_dateErrorPair(timeframe, pair)
                     print("\n Duplicate pair detected1.\n", timeframe)
                     error_set2 = 1
 
-                if xx == 2: 
-                    put_dateErrorPair(timeframe, pair)
+                if xx == 2:
+                    db.put_dateErrorPair(timeframe, pair)
                     print("\n Duplicate pair detected2.\n", timeframe)
                     error_set2 = 1
 
@@ -112,17 +113,17 @@ class PatternDetect:
 
             try:
                 client = await AsyncClient.create(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
-                print(f'Retrieving Historical data from Binance for: {pair, timeframe} \n')                    
+                print(f'Retrieving Historical data from Binance for: {pair, timeframe} \n')          
                 last_hour_date_time = datetime.now() - timedelta(hours = deltaRSI)
-                get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
-                msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
+                db.get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+                msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=db.get_startDate, end_str=None)
                 data = self.get_data_frame(symbol=pair, msg=msg) 
                 self.d_RSI()
 
-                last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
-                get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
-                msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
-                data = self.get_data_frame(symbol=pair, msg=msg)                     
+                # last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
+                # get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+                # msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
+                # data = self.get_data_frame(symbol=pair, msg=msg)                     
                 self.d_SMA()  
                 
                 if volume >= volume_set:
@@ -135,7 +136,7 @@ class PatternDetect:
                         #Not important on final code
                         if pair == "BTCUSDT":
                             entry_price = 32000.05 
-                            entry_price = get_rounded_price(pair, entry_price)
+                            entry_price = CreateOrder.get_rounded_price(pair, entry_price)
 
                         side = "BUY"
                         # if curPrice > close and sma > curPrice and rsi > 0 and rsi < 0:
@@ -144,7 +145,7 @@ class PatternDetect:
                         #     side = "SELL"
                         
                         print("%(h)s \nVolume: %(c)s \nHigh: %(a)s Close: %(b)s Current Price: %(d)s \nRSI: %(e)s SMA: %(f)s \nQTY: %(g)s \nSIDE: %(i)s \n" % 
-                            {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'h': get_startDate, 'i':side})
+                            {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'h': db.get_startDate, 'i':side})
                         # futures_order(pair, qty, entry_price, side, type, close, high)
                     
                     await client.clos_econnection()
@@ -154,7 +155,7 @@ class PatternDetect:
 #=====================================================================================================================
 
 if __name__ == '__main__':
-
+    print(datetime.now())
     pattern_detect = PatternDetect()
     asyncio.get_event_loop().run_until_complete(pattern_detect.main())
- 
+    print(datetime.now())

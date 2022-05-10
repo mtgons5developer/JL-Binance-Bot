@@ -68,33 +68,43 @@ class PatternDetect:
                         print("SMA >= curPrice: %(g)s >= %(a)s \nRSI+rsiLong: %(c)s <= %(d)s\nVolume >= Volume_SET: %(e)s >= %(f)s" % 
                                 {'a': curPrice, 'c': rsi, 'd': rsiLong, 'e': volume, 'f': volume_set, 'g': sma})    
 
-                        if curPrice > sma and rsi < rsiLong and volume >= volume_set:  
+                        if rsiShort == 1 and rsiLong == 1 and volume_set == 1:
+                            print("passed")
+                            side = "NONE"
+                            # entry_price = round(curPrice / 2, 8)
+                            entry_price = curPrice
+                            entry_price = CreateOrder.get_rounded_price(pair, entry_price)
+                            tp1 = high - close
+                            tp2 = tp1 * 0.30
+                            take_profit = round(close + tp2, 8)   
+                            print(take_profit, entry_price)
+                        elif curPrice > sma and rsi < rsiLong and volume >= volume_set:  
                             side = "BUY" 
                         elif curPrice < sma and rsi > rsiShort and volume >= volume_set:
-                            side = "SELL" 
-                        elif rsiShort == 0 and rsiLong == 0 and volume_set == 0:
-                            side = "NONE"
+                            side = "SELL"               
 
-                        print("passed")
+                        # print("passed")
                         if side == "BUY":    
-                            print("passed1")
+                            # print("passed1")
                             entry_price = round(curPrice / 2, 8)
                             entry_price = CreateOrder.get_rounded_price(pair, entry_price)
                             tp1 = high - close
                             tp2 = tp1 * 0.30
                             take_profit = round(close + tp2, 8)                                
                         elif side == "SELL":
-                            print("passed2")
+                            # print("passed2")
                             entry_price = round(curPrice * 1.5, 8)
                             entry_price = CreateOrder.get_rounded_price(pair, entry_price)
                             tp1 = high - close
                             tp2 = tp1 * 0.30
                             take_profit = round(close + tp2, 8)                                
 
-                        print("\nVolume: %(c)s \nHigh: %(a)s Close: %(b)s Current Price: %(d)s \nRSI: %(e)s SMA: %(f)s \nQTY: %(g)s \nSIDE: %(i)s \nEntry Price: %(k)s \nTake Profit: %(j)s \n" % 
-                            {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'i':side, 
-                            'j':take_profit, 'k':entry_price})
-                        # CreateOrder.futures_order(pair, qty, entry_price, side, type, close, high)
+
+                        if side != "NONE":
+                            print("\nVolume: %(c)s \nHigh: %(a)s Close: %(b)s Current Price: %(d)s \nRSI: %(e)s SMA: %(f)s \nQTY: %(g)s \nSIDE: %(i)s \nEntry Price: %(k)s \nTake Profit: %(j)s \n" % 
+                                {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'i':side, 
+                                'j':take_profit, 'k':entry_price})
+                            # CreateOrder.futures_order(pair, qty, entry_price, side, type, close, high)
                     
                     await client.clos_econnection()
 

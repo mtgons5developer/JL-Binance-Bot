@@ -13,7 +13,7 @@ class call:
         cursor = cnx.cursor(dictionary=True)
 
         try:
-            cursor.execute("SELECT timeframe, pair, qty, vol, deltaRSI, deltaSMA, rsiLong, rsiShort  FROM settings WHERE toggle='1'")
+            cursor.execute("SELECT timeframe, pair, qty, vol, deltaSMA, rsiLong, rsiShort  FROM settings WHERE toggle='1'")
             toggle = cursor.fetchall()
             cnx.close()
 
@@ -88,26 +88,26 @@ class call:
         # print("Quantity:", qty)
         return qty
 
-    def get_startDate(self, timeframe):
+    # def get_startDate(self, timeframe):
         
-        self.get_cnx()
-        cursor = cnx.cursor(dictionary=True)
+    #     self.get_cnx()
+    #     cursor = cnx.cursor(dictionary=True)
 
-        try:
-            cursor.execute("SELECT datetime FROM settings WHERE timeframe='" + timeframe + "' AND toggle='1'")
+    #     try:
+    #         cursor.execute("SELECT datetime FROM settings WHERE timeframe='" + timeframe + "' AND toggle='1'")
 
-            dd = cursor.fetchone()
-            date = dd["datetime"]
-            startDate = date.strftime("%d-%m-%Y")  
+    #         dd = cursor.fetchone()
+    #         date = dd["datetime"]
+    #         startDate = date.strftime("%d-%m-%Y")  
 
-        except:
-            t = date.today()
-            y = t - timedelta(days = 1)
-            startDate = y.strftime('%d %m %Y')            
+    #     except:
+    #         t = date.today()
+    #         y = t - timedelta(days = 1)
+    #         startDate = y.strftime('%d %m %Y')            
 
-        cnx.close()
-        # print("startDate:", startDate)
-        return startDate
+    #     cnx.close()
+    #     # print("startDate:", startDate)
+    #     return startDate
 
     def put_dateErrorSMA(self, timeframe, pair):
         

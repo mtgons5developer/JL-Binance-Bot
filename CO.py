@@ -18,7 +18,7 @@ client = Client(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
 class call:
 # =============================FUTURES=============================
 
-    def futures_order(pair, qty, entry_price, side, type, high, close):
+    def futures_order(self, pair, qty, entry_price, take_profit, side, type, high, close):
 
     #     "clientOrderId": "testOrder",
     #     "cumQty": "0",
@@ -44,30 +44,57 @@ class call:
     #     "workingType": "CONTRACT_PRICE",
     #     "priceProtect": false            // if conditional order trigger is protected   
 
-        if pair == "BTCUSDT":            
-            take_profit = 41000.01
-            entry_price = 32000
-        if pair == "ETHUSDT":            
-            take_profit = 3000.01
-            entry_price = 2000
-        if pair == "BNBUSDT":            
-            take_profit = 400.01
-            entry_price = 200
-        if pair == "BCHUSDT":            
-            take_profit = 400.01
-            entry_price = 200
-        if pair == "XRPUSDT":            
-            take_profit = 0.7
-            entry_price = 0.4
-        if pair == "EOSUSDT":            
-            take_profit = 3.01
-            entry_price = 1
-        if pair == "LTCUSDT":            
-            take_profit = 200.01
-            entry_price = 50
-        if pair == "TRXUSDT":            
-            take_profit = 0.09
-            entry_price = 0.05
+        # if pair == "BTCUSDT":            
+        #     take_profit = 41000.01
+        #     entry_price = 32000
+        # if pair == "ETHUSDT":            
+        #     take_profit = 3000.01
+        #     entry_price = 2000
+        # if pair == "BNBUSDT":            
+        #     take_profit = 400.01
+        #     entry_price = 200
+        # if pair == "BCHUSDT":            
+        #     take_profit = 400.01
+        #     entry_price = 200
+        # if pair == "XRPUSDT":            
+        #     take_profit = 0.7
+        #     entry_price = 0.4
+        # if pair == "SOLUSDT":            
+        #     take_profit = 3.01
+        #     entry_price = 1
+        # if pair == "LUNAUSDT":            
+        #     take_profit = 200.01
+        #     entry_price = 50
+        # if pair == "ADAUSDT":            
+        #     take_profit = 0.09
+        #     entry_price = 0.05
+        # if pair == "USTUSDT":            
+        #     take_profit = 0.7
+        #     entry_price = 0.4
+        # if pair == "BUSDUSDT":            
+        #     take_profit = 3.01
+        #     entry_price = 1          
+        # if pair == "DOGEUSDT":            
+        #     take_profit = 200.01
+        #     entry_price = 50
+        # if pair == "AVAXUSDT":            
+        #     take_profit = 0.09
+        #     entry_price = 0.05
+        # if pair == "DOTUSDT":            
+        #     take_profit = 0.7
+        #     entry_price = 0.4
+        # if pair == "SHIBUSDT":            
+        #     take_profit = 3.01
+        #     entry_price = 1
+        # if pair == "WBTCUSDT":            
+        #     take_profit = 200.01
+        #     entry_price = 50
+        # if pair == "DAIUSDT":            
+        #     take_profit = 0.09
+        #     entry_price = 0.05
+        # if pair == "MATICUSDT":            
+        #     take_profit = 0.09
+        #     entry_price = 0.05
 
         try:
             if type == "MARKET":
@@ -85,15 +112,15 @@ class call:
                     side=side,
                     type=type,
                     timeInForce='GTC',
-                    quantity=qty,            
+                    quantity=qty,
                     recvWindow=2000,
                     price=entry_price)
 
             orderId = order["orderId"]
             market_price = order["price"]
 
-            tp1 = high - close
-            tp2 = tp1 * 0.30
+            # tp1 = high - close
+            # tp2 = tp1 * 0.30
             # take_profit = round(close + tp2, 6)
                                                                                         
             if side == "BUY":
@@ -136,7 +163,7 @@ class call:
     # 'reduceOnly': False, 'closePosition': False, 'side': 'BUY', 'positionSide': 'BOTH', 'stopPrice': '0', 'workingType': 'CONTRACT_PRICE', 
     # 'priceProtect': False, 'origType': 'LIMIT', 'updateTime': 1651089447160}
 
-    def check_order(orderId):
+    def check_order(self, orderId):
 
         try:                    
             result = client.futures_get_order(
@@ -156,7 +183,7 @@ class call:
 
         # ===========================================================================================
 
-    def cancel_order(orderID, pair):
+    def cancel_order(self, orderID, pair):
         try:			
             result = client.futures_cancel_order(
                 symbol=pair,
@@ -172,7 +199,7 @@ class call:
             print(e)
             print("cancel2")
 
-    def get_tick_size(symbol: str) -> float:
+    def get_tick_size(self, symbol: str) -> float:
         info = client.futures_exchange_info()
 
         for symbol_info in info['symbols']:
@@ -182,27 +209,5 @@ class call:
                         return float(symbol_filter['tickSize'])
 
 
-    def get_rounded_price(symbol: str, price: float) -> float:
-        return round_step_size(price, get_tick_size(symbol))
-
-
-# dt = '22/03/2022'
-# day, month, year = (int(x) for x in dt.split('/'))    
-# ans = datetime.date(year, month, day)
-# print (ans.strftime("%A"))
-# quit()
-
-# pair = 'BTCUSDT'
-# entry_price = 37000.05
-# entry_price = get_rounded_price(pair, entry_price)
-
-# 3,645.1
-# 4,226.4
-# qty = 0.099
-# qty = 0.002
-# side = 'BUY'
-
-# futures_order()
-# order()
-# cancel()
-# quit()
+    def get_rounded_price(self, symbol: str, price: float) -> float:
+        return round_step_size(price, self.get_tick_size(symbol))

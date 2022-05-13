@@ -13,7 +13,7 @@ class call:
         cursor = cnx.cursor(dictionary=True)
 
         try:
-            cursor.execute("SELECT timeframe, pair, qty, vol, deltaSMA, rsiLong, rsiShort  FROM settings WHERE toggle='1'")
+            cursor.execute("SELECT order_type, timeframe, pair, qty, vol, deltaSMA, rsiLong, rsiShort  FROM settings WHERE toggle='1'")
             toggle = cursor.fetchall()
             cnx.close()
 
@@ -147,15 +147,15 @@ class call:
             cnx.rollback()
         
         cnx.close()
-
-    def put_orderID(self, orderId, entryPrice, qty, status, take_profit, orderIdTP):
+                          
+    def put_orderID(self, pair, orderId, market_price, qty, status, take_profit, orderIdTP, order_type, timeframe, side):
 
         self.get_cnx()
         cursor = cnx.cursor()
 
-        query = """INSERT IGNORE INTO order_entry (orderId, qty, entryPrice, status, close_pos, orderIdTP) VALUES (%s, %s, %s, %s, %s, %s)"""
+        query = """INSERT IGNORE INTO order_entry (pair, orderId, qty, entryPrice, status, close_pos, orderIdTP, order_type, timeframe, side) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
-        values = (int(orderId), float(qty), float(entryPrice), int(status), float(take_profit), int(orderIdTP))
+        values = (pair, int(orderId), float(qty), float(market_price), '1', float(take_profit), int(orderIdTP), order_type, timeframe, side)
 
         cursor.execute(query, values)
             
@@ -163,7 +163,22 @@ class call:
         cursor.close()
         cnx.close()
         print("Completed")
+                            
+    def put_orderTest(self, pair, qty, entry_price, take_profit, side, order_type, timeframe):
 
+        self.get_cnx()
+        cursor = cnx.cursor()
+
+        query = """INSERT IGNORE INTO order_entry (pair, qty, entryPrice, status, side, order_type, timeframe, close_pos) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
+
+        values = (pair, float(qty), float(entry_price), "2", side, order_type, timeframe, int(take_profit))
+
+        cursor.execute(query, values)
+            
+        cnx.commit()
+        cursor.close()
+        cnx.close()
+        print("Completed")
 
     def get_cnx(self):
         global cnx

@@ -41,6 +41,7 @@ class PatternDetect:
             rsiLong = x['rsiLong']
             rsiShort = x['rsiShort']
             deltaSMA = x['deltaSMA']
+            order_type = x['order_type']
 
             # BTCUSDT, ETHUSDT, BNBUSDT, XRPUSDT, SOLUSDT, LUNAUSDT, ADAUSDT, USTUSDT, BUSDUSDT, 
             # DOGEUSDT, AVAXUSDT, DOTUSDT, SHIBUSDT, WBTCUSDT, DAIUSDT, MATICUSDT
@@ -55,12 +56,11 @@ class PatternDetect:
                     get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
                     msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
                     data = self.get_data_frame(symbol=pair, msg=msg) 
+                    self.d_Candle()  
                     self.d_RSI()                  
                     self.d_SMA()  
 
                     if error_set == 0:
-                        type = "LIMIT"
-                        # type = "MARKET"
 
                         #Not important on final code      
                         side = "NONE"
@@ -69,42 +69,59 @@ class PatternDetect:
                                 {'a': curPrice, 'c': rsi, 'd': rsiLong, 'e': volume, 'f': volume_set, 'g': sma})    
 
                         if rsiShort == 1 and rsiLong == 1 and volume_set == 1:
-                            print("passed")
-                            side = "NONE"
+                            print("---Settings Disabled---")
+                            side = "SELL"
                             # entry_price = round(curPrice / 2, 8)
                             entry_price = curPrice
                             entry_price = CreateOrder.get_rounded_price(pair, entry_price)
                             tp1 = high - close
                             tp2 = tp1 * 0.30
                             take_profit = round(close + tp2, 8)   
-                            print(take_profit, entry_price)
-                        elif curPrice > sma and rsi < rsiLong and volume >= volume_set:  
-                            side = "BUY" 
-                        elif curPrice < sma and rsi > rsiShort and volume >= volume_set:
-                            side = "SELL"               
+
+                            # 28565.4 - 28144.9, Open - Close if + then Red Candle
+                            # 28144.9 - 28517.0, Open - Close if - then Green Candle
+                        elif rsiShort == 1 and rsiLong == 1 and volume_set > 1:
+                            print("---RSI Disabled---")
+                            side = "SELL"
+                            # entry_price = round(curPrice / 2, 8)
+                            entry_price = curPrice
+                            entry_price = CreateOrder.get_rounded_price(pair, entry_price)
+                            tp1 = high - close
+                            tp2 = tp1 * 0.30
+                            take_profit = round(close + tp2, 8)   
+
+                            # 28565.4 - 28144.9, Open - Close if + then Red Candle
+                            # 28144.9 - 28517.0, Open - Close if - then Green Candle                            
+                        else:
+                        
+                            if curPrice > sma and rsi < rsiLong and volume >= volume_set:  
+                                side = "BUY" 
+                            elif curPrice < sma and rsi > rsiShort and volume >= volume_set:
+                                side = "SELL"               
 
                         # print("passed")
                         if side == "BUY":    
-                            # print("passed1")
-                            entry_price = round(curPrice / 2, 8)
+                            # print("BUY")
+                            entry_price = round(curPrice / 1.5, 8)
                             entry_price = CreateOrder.get_rounded_price(pair, entry_price)
                             tp1 = high - close
                             tp2 = tp1 * 0.30
                             take_profit = round(close + tp2, 8)                                
                         elif side == "SELL":
-                            # print("passed2")
+                            # print("SELL")
                             entry_price = round(curPrice * 1.5, 8)
                             entry_price = CreateOrder.get_rounded_price(pair, entry_price)
                             tp1 = high - close
                             tp2 = tp1 * 0.30
-                            take_profit = round(close + tp2, 8)                                
+                            take_profit = round(close - tp2, 8)
 
+                        # if side != "NONE":
+                        print("\nVolume: %(c)s \nHigh: %(a)s Close: %(b)s Current Price: %(d)s \nRSI: %(e)s SMA: %(f)s \nQTY: %(g)s \nSIDE: %(i)s \nEntry Price: %(k)s \nTake Profit: %(j)s \n" % 
+                            {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'i':side, 
+                            'j':take_profit, 'k':entry_price})
 
-                        if side != "NONE":
-                            print("\nVolume: %(c)s \nHigh: %(a)s Close: %(b)s Current Price: %(d)s \nRSI: %(e)s SMA: %(f)s \nQTY: %(g)s \nSIDE: %(i)s \nEntry Price: %(k)s \nTake Profit: %(j)s \n" % 
-                                {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'i':side, 
-                                'j':take_profit, 'k':entry_price})
-                            # CreateOrder.futures_order(pair, qty, entry_price, side, type, close, high)
+                        CreateOrder.futures_order(pair, qty, entry_price, side, order_type, take_profit, timeframe)
+                        # print('------------futures_order------------')
                     
                     await client.clos_econnection()
 
@@ -135,6 +152,14 @@ class PatternDetect:
         return df
 
 #=====================================================================================================================
+    def d_Candle(self):
+        global open
+
+        cc = df["Open"]
+        rw = len(df.index)
+        tt = str(cc[rw - 1])
+        open = float(tt)
+        print(open)
 
     def d_RSI(self):
         global rsi, error_set

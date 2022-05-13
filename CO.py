@@ -15,140 +15,72 @@ from binance.helpers import round_step_size
 
 client = Client(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
 # print("Logged in")
+    
 class call:
 # =============================FUTURES=============================
-
-    def futures_order(self, pair, qty, entry_price, take_profit, side, type, high, close):
-
-    #     "clientOrderId": "testOrder",
-    #     "cumQty": "0",
-    #     "cumQuote": "0",
-    #     "executedQty": "0",
-    #     "orderId": 22542179,
-    #     "avgPrice": "0.00000",
-    #     "origQty": "10",
-    #     "price": "0",
-    #     "reduceOnly": false,
-    #     "side": "BUY",
-    #     "positionSide": "SHORT",
-    #     "status": "NEW",
-    #     "stopPrice": "9300",        // please ignore when order type is TRAILING_STOP_MARKET
-    #     "closePosition": false,   // if Close-All
-    #     "symbol": "BTCUSDT",
-    #     "timeInForce": "GTC",
-    #     "type": "TRAILING_STOP_MARKET",
-    #     "origType": "TRAILING_STOP_MARKET",
-    #     "activatePrice": "9020",    // activation price, only return with TRAILING_STOP_MARKET order
-    #     "priceRate": "0.3",         // callback rate, only return with TRAILING_STOP_MARKET order
-    #     "updateTime": 1566818724722,
-    #     "workingType": "CONTRACT_PRICE",
-    #     "priceProtect": false            // if conditional order trigger is protected   
-
-        # if pair == "BTCUSDT":            
-        #     take_profit = 41000.01
-        #     entry_price = 32000
-        # if pair == "ETHUSDT":            
-        #     take_profit = 3000.01
-        #     entry_price = 2000
-        # if pair == "BNBUSDT":            
-        #     take_profit = 400.01
-        #     entry_price = 200
-        # if pair == "BCHUSDT":            
-        #     take_profit = 400.01
-        #     entry_price = 200
-        # if pair == "XRPUSDT":            
-        #     take_profit = 0.7
-        #     entry_price = 0.4
-        # if pair == "SOLUSDT":            
-        #     take_profit = 3.01
-        #     entry_price = 1
-        # if pair == "LUNAUSDT":            
-        #     take_profit = 200.01
-        #     entry_price = 50
-        # if pair == "ADAUSDT":            
-        #     take_profit = 0.09
-        #     entry_price = 0.05
-        # if pair == "USTUSDT":            
-        #     take_profit = 0.7
-        #     entry_price = 0.4
-        # if pair == "BUSDUSDT":            
-        #     take_profit = 3.01
-        #     entry_price = 1          
-        # if pair == "DOGEUSDT":            
-        #     take_profit = 200.01
-        #     entry_price = 50
-        # if pair == "AVAXUSDT":            
-        #     take_profit = 0.09
-        #     entry_price = 0.05
-        # if pair == "DOTUSDT":            
-        #     take_profit = 0.7
-        #     entry_price = 0.4
-        # if pair == "SHIBUSDT":            
-        #     take_profit = 3.01
-        #     entry_price = 1
-        # if pair == "WBTCUSDT":            
-        #     take_profit = 200.01
-        #     entry_price = 50
-        # if pair == "DAIUSDT":            
-        #     take_profit = 0.09
-        #     entry_price = 0.05
-        # if pair == "MATICUSDT":            
-        #     take_profit = 0.09
-        #     entry_price = 0.05
+                      
+    def futures_order(self, pair, qty, entry_price, side, order_type, take_profit, timeframe):
 
         try:
-            if type == "MARKET":
+            # if order_type == "MARKET":
+            #     order = client.futures_create_order(
+            #         symbol=pair,
+            #         side=side,
+            #         type=order_type,
+            #         timeInForce='GTC',
+            #         quantity=qty,            
+            #         recvWindow=2000)
+            order_type = "LIMIT"
+            if order_type == "LIMIT":
                 order = client.futures_create_order(
                     symbol=pair,
                     side=side,
-                    type=type,
-                    timeInForce='GTC',
-                    quantity=qty,            
-                    recvWindow=2000)
-                    
-            else:
-                order = client.futures_create_order(
-                    symbol=pair,
-                    side=side,
-                    type=type,
+                    type=order_type,
                     timeInForce='GTC',
                     quantity=qty,
                     recvWindow=2000,
                     price=entry_price)
 
-            orderId = order["orderId"]
-            market_price = order["price"]
+            if order_type == "MARKET" or order_type == "LIMIT":
 
-            # tp1 = high - close
-            # tp2 = tp1 * 0.30
-            # take_profit = round(close + tp2, 6)
-                                                                                        
-            if side == "BUY":
-                side = "SELL"
-            else:
-                side = "BUY"
+                orderId = order["orderId"]
+                market_price = order["price"]
+                                                                                            
+                if side == "BUY":
+                    side = "SELL"
+                else:
+                    side = "BUY"
 
-            order2 = client.futures_create_order(
-                symbol=pair,
-                side=side,
-                positionSide='BOTH',
-                type="TAKE_PROFIT_MARKET",
-                timeInForce='GTC',
-                stopPrice=take_profit,
-                quantity=1,    
-                reduceOnly=True,
-                workingType= 'MARK_PRICE')
+                order2 = client.futures_create_order(
+                    symbol=pair,
+                    side=side,
+                    positionSide='BOTH',
+                    type="TAKE_PROFIT_MARKET",
+                    timeInForce='GTC',
+                    stopPrice=take_profit,
+                    quantity=1,    
+                    reduceOnly=True,
+                    workingType= 'MARK_PRICE')
 
-            orderIdTP = order2["orderId"]
-            status = 1
-            db.put_orderID(orderId, market_price, qty, status, take_profit, orderIdTP)
+                orderIdTP = order2["orderId"]
+                status = 1
+                db.put_orderID(pair, orderId, market_price, qty, status, take_profit, orderIdTP, side, timeframe)
+                print('-------passed-------')
+                last_hour_date_time = datetime.now() - timedelta(hours = 24)
+                get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+                # insert_TH(get_startDate)
 
-            last_hour_date_time = datetime.now() - timedelta(hours = 24)
-            get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
-            insert_TH(get_startDate)
+                print("\nOrder_Position: %(n)s \nOrderIdTP: %(b)s \nMarket Price: %(c)s \nStatus: %(d)s \nTake Profit: %(e)s \nQuantity: %(f)s" % 
+                    {'n': orderId, 'b': orderIdTP, 'c': market_price, 'd': status, 'e': take_profit, 'f': qty})
 
-            print("\nOrder_Position: %(n)s \nOrderIdTP: %(b)s \nMarket Price: %(c)s \nStatus: %(d)s \nTake Profit: %(e)s \nQuantity: %(f)s" % 
-                {'n': orderId, 'b': orderIdTP, 'c': market_price, 'd': status, 'e': take_profit, 'f': qty})
+            if order_type == "TEST":
+                               
+                db.put_orderTest(pair, qty, entry_price, take_profit, side, order_type, timeframe)
+                # last_hour_date_time = datetime.now() - timedelta(hours = 24)
+                # get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+                # insert_TH(get_startDate)                
+                # print("\nOrder_Position: %(n)s \nOrderIdTP: %(b)s \nMarket Price: %(c)s \nStatus: %(d)s \nTake Profit: %(e)s \nQuantity: %(f)s" % 
+                #     {'n': orderId, 'b': orderIdTP, 'c': market_price, 'd': status, 'e': take_profit, 'f': qty})                
 
         except BinanceAPIException as e:
             print(e)
@@ -211,3 +143,27 @@ class call:
 
     def get_rounded_price(self, symbol: str, price: float) -> float:
         return round_step_size(price, self.get_tick_size(symbol))
+
+    #     "clientOrderId": "testOrder",
+    #     "cumQty": "0",
+    #     "cumQuote": "0",
+    #     "executedQty": "0",
+    #     "orderId": 22542179,
+    #     "avgPrice": "0.00000",
+    #     "origQty": "10",
+    #     "price": "0",
+    #     "reduceOnly": false,
+    #     "side": "BUY",
+    #     "positionSide": "SHORT",
+    #     "status": "NEW",
+    #     "stopPrice": "9300",        // please ignore when order type is TRAILING_STOP_MARKET
+    #     "closePosition": false,   // if Close-All
+    #     "symbol": "BTCUSDT",
+    #     "timeInForce": "GTC",
+    #     "type": "TRAILING_STOP_MARKET",
+    #     "origType": "TRAILING_STOP_MARKET",
+    #     "activatePrice": "9020",    // activation price, only return with TRAILING_STOP_MARKET order
+    #     "priceRate": "0.3",         // callback rate, only return with TRAILING_STOP_MARKET order
+    #     "updateTime": 1566818724722,
+    #     "workingType": "CONTRACT_PRICE",
+    #     "priceProtect": false            // if conditional order trigger is protected   

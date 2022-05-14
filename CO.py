@@ -22,24 +22,24 @@ class call:
     def futures_order(self, pair, qty, entry_price, side, order_type, take_profit, timeframe):
 
         try:
-            # if order_type == "MARKET":
-            #     order = client.futures_create_order(
-            #         symbol=pair,
-            #         side=side,
-            #         type=order_type,
-            #         timeInForce='GTC',
-            #         quantity=qty,            
-            #         recvWindow=2000)
-            order_type = "LIMIT"
-            if order_type == "LIMIT":
+            if order_type == "MARKET":
                 order = client.futures_create_order(
                     symbol=pair,
                     side=side,
                     type=order_type,
                     timeInForce='GTC',
-                    quantity=qty,
-                    recvWindow=2000,
-                    price=entry_price)
+                    quantity=qty,            
+                    recvWindow=2000)
+            # order_type = "LIMIT"
+            # if order_type == "LIMIT":
+            #     order = client.futures_create_order(
+            #         symbol=pair,
+            #         side=side,
+            #         type=order_type,
+            #         timeInForce='GTC',
+            #         quantity=qty,
+            #         recvWindow=2000,
+            #         price=entry_price)
 
             if order_type == "MARKET" or order_type == "LIMIT":
 

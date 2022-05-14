@@ -171,7 +171,7 @@ class call:
 
         query = """INSERT IGNORE INTO order_entry (pair, qty, entryPrice, status, side, order_type, timeframe, close_pos) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
 
-        values = (pair, float(qty), float(entry_price), "2", side, order_type, timeframe, int(take_profit))
+        values = (pair, float(qty), float(entry_price), "1", side, order_type, timeframe, int(take_profit))
 
         cursor.execute(query, values)
             

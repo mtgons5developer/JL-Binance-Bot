@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from glob import glob
 
 import talib
 import asyncio
@@ -19,10 +20,8 @@ class PatternDetect:
 #=====================================================================================================================
 
     async def main(self):
-        global pair, timeframe, error_set, deltaSMA, rsiLong, rsiShort
+        global pair, timeframe, error_set, deltaSMA
         
-        error_set = 0
-        error_set2 = 0
         result = db.get_toggle()
 
         yy = 0
@@ -36,151 +35,50 @@ class PatternDetect:
             timeframe = x['timeframe']
             qty = x['qty']
             volume_set = x['vol']
-
-            rsiLong = x['rsiLong']
-            rsiShort = x['rsiShort']
-            deltaSMA = x['deltaSMA']
             order_type = x['order_type']
 
             # BTCUSDT, ETHUSDT, BNBUSDT, XRPUSDT, SOLUSDT, LUNAUSDT, ADAUSDT, USTUSDT, BUSDUSDT, 
             # DOGEUSDT, AVAXUSDT, DOTUSDT, SHIBUSDT, WBTCUSDT, DAIUSDT, MATICUSDT
 
             if pair == "BTCUSDT":# and error_set2 == 0:
-
-                try:
-                    
+                try:                    
                     client = await AsyncClient.create(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
+                    if timeframe == "3m": 
+                        deltaSMA = 10
+                    if timeframe == "5m":
+                        deltaSMA = 12
+                    if timeframe == "15m":
+                        deltaSMA = 16
+                    if timeframe == "30m":
+                        deltaSMA = 24
+                    if timeframe == "1h":
+                        deltaSMA = 40
+                    if timeframe == "2h":
+                        deltaSMA = 80
+                    if timeframe == "4h":
+                        deltaSMA = 140
+                    if timeframe == "6h":
+                        deltaSMA = 200
+                    if timeframe == "8h":
+                        deltaSMA = 300
+                    if timeframe == "12h":
+                        deltaSMA = 500
+                    if timeframe == "1d":
+                        deltaSMA = 1000
+
                     last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
                     get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
                     msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
                     data = self.get_data_frame(symbol=pair, msg=msg) 
-                    self.d_Candle()  
-                    self.d_RSI()
-                    self.d_SMA()
+                    self.Pattern_Detect()                 
                     print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')          
+                    
+                    print("\nVolume: %(c)s \nHigh: %(a)s Close: %(b)s Current Price: %(d)s \nRSI: %(e)s SMA: %(f)s \nQTY: %(g)s \nSIDE: %(i)s \nEntry Price: %(k)s \nTake Profit: %(j)s \n" % 
+                        {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'i':side, 
+                        'j':take_profit, 'k':entry_price})
 
-                    if error_set == 0:
-
-                        #Not important on final code      
-                        side = "NONE"
-
-                        print("SMA >= curPrice: %(g)s >= %(a)s \nRSI+rsiLong: %(c)s <= %(d)s\nVolume >= Volume_SET: %(e)s >= %(f)s" % 
-                                {'a': curPrice, 'c': rsi, 'd': rsiLong, 'e': volume, 'f': volume_set, 'g': sma})    
-
-                        if rsiShort == 1 and rsiLong == 1 and volume_set == 1:
-                            print("---Settings Disabled---")
-                            side = "SELL"
-                            # entry_price = round(curPrice / 2, 8)
-                            entry_price = curPrice
-                            entry_price = CreateOrder.get_rounded_price(pair, entry_price)
-                            tp1 = high - close
-                            tp2 = tp1 * 0.30
-                            take_profit = round(close + tp2, 8)   
-
-                            if curPrice > sma and volume >= volume_set and candle < 0:
-                                side = "BUY" 
-                            elif curPrice < sma and volume >= volume_set and candle > 0:
-                                side = "SELL"  
-
-                        elif rsiShort == 1 and rsiLong == 1 and volume_set > 1:
-                            print("---RSI Disabled---")
-                            # entry_price = round(curPrice / 2, 8)
-                            entry_price = curPrice
-                            entry_price = CreateOrder.get_rounded_price(pair, entry_price)
-                            tp1 = high - close
-                            tp2 = tp1 * 0.30
-                            take_profit = round(close + tp2, 8)   
-                            candle = open - close
-
-                            if curPrice > sma and volume >= volume_set and candle < 0:
-                                side = "BUY" 
-                            elif curPrice < sma and volume >= volume_set and candle > 0:
-                                side = "SELL"                                       
-
-                        elif rsiShort > 1 and rsiLong > 1 and volume_set > 1: #Detect Bearish/Bullish Candle
-
-                            # 29502.7  29506.6  29320.1  29387.9 
-                            # HL = 29506.6 - 29320.1
-                            # HL = 186.5
-                            # 2D = 93.25
-                            # x = 29320.1 + 93.25; LOW + 2D
-                            # x = 29413.35
-                            # Lx = 29506.15
-                            # SMA = 29091.51      
-                            # candle = 29502.7 - 29387.9
-                            # candle = 114.8; RED
-
-                            # 29388.0  29622.6  29388.0  29600.0
-                            # HL = 29622.6 - 29388.0
-                            # HL = 234.6
-                            # 2D = 117.3
-                            # x = 29388.0 + 117.3; LOW + 2D
-                            # x = 29505.3
-                            # Lx = 29388 ; 29505.3
-                            # SMA = 29127.39    
-                            # candle = 29388 - 29600
-                            # candle = -212; GREEN
-                                                        
-                            # 29600.0  29840.0  29557.0  29790.4
-                            # HL = 29840 - 29557
-                            # HL = 283
-                            # 2D = 141.5
-                            # x = 29557 + 141.5; LOW + 2D
-                            # x = 29698.5
-                            # Lx = 29557 ; 29698.5
-                            # SMA = 29091.51      
-                            # candle = 29600 - 29790.4
-                            # candle = -190.4; GREEN
-
-                            #29790.4  29934.7  29700.1  29739.9
-                            # HL = 29934.7 - 29700.1
-                            # HL = 234.6
-                            # 2D = 117.3
-                            # x = 29700.1 + 117.3; LOW + 2D
-                            # x = 29817.4
-                            # Lx = 29700.1 ; 29817.4
-                            # SMA = 29106.49
-                            # candle = 29790.4 - 29739.9
-                            # candle = 50.5; RED                            
-
-                            # 29739.9  29776.8  29536.7  29607.0
-                            # HL = 29776.8 - 29536.7
-                            # HL = 240.1
-                            # 2D = 120.05
-                            # x = 29536.7 + 120.05; LOW + 2D
-                            # x = 29656.75
-                            # Lx = 29536.7 ; 29656.75; Compare LOW and x
-                            # SMA = 29126.45    
-                            # candle = 29502.7 - 29387.9
-                            # candle = 114.8; RED
-
-
-
-
-                            # Entry Price: 29900.0 ;Error
-                            # Take Profit: 29900.0 
-
-
-
-                            print("---RSI Disabled---")
-                            entry_price = CreateOrder.get_rounded_price(pair, curPrice)
-                            tp1 = high - close
-                            tp2 = tp1 * 0.30
-                            take_profit = round(close + tp2, 8)   
-                            candle = open - close
-
-                            if curPrice > sma and volume >= volume_set and candle < 0:
-                                side = "BUY" 
-                            elif curPrice < sma and volume >= volume_set and candle > 0:
-                                side = "SELL"    
-
-                        # if side != "NONE":
-                        print("\nVolume: %(c)s \nHigh: %(a)s Close: %(b)s Current Price: %(d)s \nRSI: %(e)s SMA: %(f)s \nQTY: %(g)s \nSIDE: %(i)s \nEntry Price: %(k)s \nTake Profit: %(j)s \n" % 
-                            {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'i':side, 
-                            'j':take_profit, 'k':entry_price})
-
-                        # CreateOrder.futures_order(pair, qty, entry_price, side, order_type, take_profit, timeframe)
-                        # print('------------futures_order------------')
+                    # CreateOrder.futures_order(pair, qty, entry_price, side, order_type, take_profit, timeframe)
+                    # print('------------futures_order------------')
                     
                     await client.close_connection()
 
@@ -200,17 +98,128 @@ class PatternDetect:
         df["Close"] = df["Close"].astype(float)
         df["Volume"] = df["Volume"].astype(float)
 
-        rows_count = len(df.index)
-        vv = df["Volume"]
-        volume = round(vv[rows_count - 1])
-        cc = df["Close"]
-        close = cc[rows_count - 1]
-        hh = df["High"]
-        high = hh[rows_count - 1]   
-        print(df)
         return df
 
 #=====================================================================================================================
+
+    def Pattern_Detect(self):
+        global side
+
+        RSI = talib.RSI(df['Close'], timeperiod=14)
+        BOP = talib.BOP(df['Open'], df['High'], df['Low'], df['Close'])
+        macd, macdsignal, macdhist = talib.MACD(df['Close'], fastperiod=3, slowperiod=10, signalperiod=16) #HIGH TF
+        fastk, fastd = talib.STOCHRSI(df['Close'], timeperiod=14, fastk_period=5, fastd_period=3, fastd_matype=0)
+
+        df['BOP'] = round(BOP, 1)
+        df['RSI'] = round(RSI)
+        df['fastd'] = round(fastd)
+        df['MACD'] = round(macd )
+        df['Signal'] = round(macdsignal)
+        df['History'] = round(macdhist)                 
+        rr = len(df.index)
+        df['OpenT'] = np.where(df["Open"][rr - 4] < df['Close'], 1, -1)
+        df['RSIT'] = np.where(df["RSI"][rr - 4] < df['RSI'], 1, -1)
+        df['fastdT'] = np.where(df["fastd"][rr - 4] < df['fastd'], 1, -1)
+        df['MACDT'] = np.where(df["MACD"][rr - 4] < df['MACD'], 1, -1)
+        df['SignalT'] = np.where(df["Signal"][rr - 4] < df['Signal'], 1, -1)
+        df['HistoryT'] = np.where(df["History"][rr - 4] < df['History'], 1, -1)
+
+        yy = 5
+        HistoryT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['HistoryT'][rr - yy]
+            if n < 0:
+                HistoryT = "LONG"
+            else:
+                HistoryT = "SHORT"
+
+            if yy == 1: break
+
+        yy = 5
+        SignalT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['SignalT'][rr - yy]
+            if n < 0:
+                SignalT = "LONG"
+            else:
+                SignalT = "SHORT"
+
+            if yy == 1: break
+        yy = 5
+        SignalT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['SignalT'][rr - yy]
+            if n < 0:
+                SignalT = "LONG"
+            else:
+                SignalT = "SHORT"
+
+            if yy == 1: break
+
+        yy = 5
+        MACDT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['MACDT'][rr - yy]
+            if n < 0:
+                MACDT = "LONG"
+            else:
+                MACDT = "SHORT"
+
+            if yy == 1: break
+
+        yy = 5
+        fastdT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['fastdT'][rr - yy]
+            if n < 0:
+                fastdT = "LONG"
+            else:
+                fastdT = "SHORT"
+
+            if yy == 1: break
+
+        yy = 5
+        RSIT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['RSIT'][rr - yy]
+            if n < 0:
+                RSIT = "LONG"
+            else:
+                RSIT = "SHORT"
+
+            if yy == 1: break
+
+        yy = 5
+        OpenT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['OpenT'][rr - yy]
+            if n < 0:
+                OpenT = "LONG"
+            else:
+                OpenT = "SHORT"
+
+            if yy == 1: break
+
+        if OpenT < "LONG" and RSIT < "LONG" and fastdT < "LONG" and MACDT < "LONG" and SignalT < "LONG" and HistoryT < "LONG":
+            df['Trigger'] = "LONG"
+            side = "BUY"
+        else:
+            df['Trigger'] = "SHORT"
+            side = "SELL"
+
+        print(df)
+        with open('output.txt', 'w') as f:
+            f.write(
+                df.to_string()
+            )  
+
     def d_Candle(self):
         global open
 

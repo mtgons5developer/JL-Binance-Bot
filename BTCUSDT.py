@@ -118,12 +118,27 @@ class PatternDetect:
         df['History'] = round(macdhist)                 
         rr = len(df.index)
         df['OpenT'] = np.where(df["Open"][rr - 4] < df['Close'], 1, -1)
+        df['BOPT'] = np.where(df["BOP"][rr - 4] < df['BOP'], 1, -1)
         df['RSIT'] = np.where(df["RSI"][rr - 4] < df['RSI'], 1, -1)
         df['fastdT'] = np.where(df["fastd"][rr - 4] < df['fastd'], 1, -1)
         df['MACDT'] = np.where(df["MACD"][rr - 4] < df['MACD'], 1, -1)
         df['SignalT'] = np.where(df["Signal"][rr - 4] < df['Signal'], 1, -1)
         df['HistoryT'] = np.where(df["History"][rr - 4] < df['History'], 1, -1)
 
+        yy = 5
+        BOPT = "NONE"
+        BOP = 0
+        for y in df:
+            yy -= 1
+            n = df['BOPT'][rr - yy]
+            BOP += n
+            # if n < 0:
+            #     BOPT = "LONG"
+            # else:
+            #     BOPT = "SHORT"
+
+            if yy == 1: break
+        print(BOP)
         yy = 5
         HistoryT = "NONE"
         for y in df:
@@ -207,11 +222,13 @@ class PatternDetect:
 
             if yy == 1: break
 
-        if OpenT < "LONG" and RSIT < "LONG" and fastdT < "LONG" and MACDT < "LONG" and SignalT < "LONG" and HistoryT < "LONG":
-            df['Trigger'] = "LONG"
+        if OpenT < "LONG" and BOPT < "LONG" and RSIT < "LONG" and fastdT < "LONG" and MACDT < "LONG" and SignalT < "LONG" and HistoryT < "LONG":
+            print("BUY")
+            # df['Trigger'] = "LONG"
             side = "BUY"
-        else:
-            df['Trigger'] = "SHORT"
+        elif OpenT > "LONG" and RSIT > "LONG" and fastdT > "LONG" and MACDT > "LONG" and SignalT > "LONG" and HistoryT > "LONG":
+            print("SELL")
+            # df['Trigger'] = "SHORT"
             side = "SELL"
 
         print(df)

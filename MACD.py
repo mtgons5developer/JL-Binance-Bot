@@ -18,9 +18,13 @@ class PatternDetect:
     async def main(self):
 
         client = await AsyncClient.create(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
-        msg = await client.futures_historical_klines(symbol=symbol, interval="1h", start_str="2022-13-05 00:00:00", end_str=None)
+        msg = await client.futures_historical_klines(symbol=symbol, interval="3m", start_str="2022-14-05 00:00:00", end_str=None)
         data = self.get_data_frame(symbol=symbol, msg=msg) 
+        self.MACD()
+        await client.close_connection()
+        quit()
 
+    def MACD(self):
         RSI = talib.RSI(df['Close'], timeperiod=14)
         BOP = talib.BOP(df['Open'], df['High'], df['Low'], df['Close'])
         macd, macdsignal, macdhist = talib.MACD(df['Close'], fastperiod=3, slowperiod=10, signalperiod=16) #HIGH TF
@@ -40,70 +44,122 @@ class PatternDetect:
         # BOP =     "4x TF going lower or equal or TF 1 is < TF2-4" Then Long
         # RSI =     "4x TF going lower or equal or TF 1 is < TF2-4" Then Long
         # fastd =   "4x TF going lower or equal or TF 1 is < TF2-4" Then Long
-        # fastk =   "4x TF going lower or equal or TF 1 is > TF2-4" Then Long
         # History = "4x TF going lower or equal or TF 1 is < TF2-4" Then Long
 
         df['BOP'] = round(BOP, 1)
         df['RSI'] = round(RSI)
-        df['fastk'] = round(fastk)
         df['fastd'] = round(fastd)
         df['MACD'] = round(macd )
         df['Signal'] = round(macdsignal)
         df['History'] = round(macdhist)
 
-        df['Trigger'] = np.where(df['MACD'] > df['Signal'], 1, 0)
-        df['Position'] = df['Trigger'].diff()
-        df['Buy'] = np.where(df['Position'] == 1, df['Close'], 'NaN')
-        df['Sell'] = np.where(df['Position'] == -1, df['Close'], 'NaN')                     
-        print(df)
-        with open('output.txt', 'w') as f:
-            f.write(
-                df.to_string()
-            )        
-        quit()
-        # self.shortEMA()
-        # self.longEMA()
-        self.MACD()
-        # self.plot_graph(df)        
-        # shortEMA = df['Close'].ewm(span=12, adjust=False).mean()
-        # longEMA = df['Close'].ewm(span=26, adjust=False).mean()
-        # MACD = shortEMA - longEMA 
-        # signal = MACD.ewm(span=9, adjust=False).mean()
-        # df['MACD'] = MACD 
-        # df['signal'] = signal
-        # df['Trigger'] = np.where(df['MACD'] > df['signal'], 1, 0)
+        # df['Trigger'] = np.where(df['MACD'] > df['Signal'], 1, 0)
         # df['Position'] = df['Trigger'].diff()
-        # print(df)
-        await client.close_connection()
+        # df['Buy'] = np.where(df['Position'] == 1, df['Close'], 'NaN')
+        # df['Sell'] = np.where(df['Position'] == -1, df['Close'], 'NaN')                     
 
-    def plot_graph(df):
-        df=df.astype(float)
-        df[['Close', 'MACD', 'signal']].plot()
-        plt.xlabel('Time', fontsize=18)
-        plt.ylabel('Close Price', fontsize=18)
-        x_axis = df.index
-        plt.show()
+        rr = len(df.index)
 
-    def MACD(self):
-        shortEMA = df['Close'].ewm(span=12, adjust=False).mean()
-        longEMA = df['Close'].ewm(span=26, adjust=False).mean()
-        MACD = shortEMA - longEMA 
-        signal = MACD.ewm(span=9, adjust=False).mean()
-        df['MACD'] = MACD 
-        df['signal'] = signal
-        df['Trigger'] = np.where(df['MACD'] > df['signal'], 1, 0)
-        df['Position'] = df['Trigger'].diff()
-        df['Buy'] = np.where(df['Position'] == 1, df['Close'], 'NaN')
-        df['Sell'] = np.where(df['Position'] == -1, df['Close'], 'NaN')
+        df['OpenT'] = np.where(df["Open"][rr - 4] < df['Close'], 1, -1)
+        df['RSIT'] = np.where(df["RSI"][rr - 4] < df['RSI'], 1, -1)
+        df['fastdT'] = np.where(df["fastd"][rr - 4] < df['fastd'], 1, -1)
+        df['MACDT'] = np.where(df["MACD"][rr - 4] < df['MACD'], 1, -1)
+        df['SignalT'] = np.where(df["Signal"][rr - 4] < df['Signal'], 1, -1)
+        df['HistoryT'] = np.where(df["History"][rr - 4] < df['History'], 1, -1)
+
+        yy = 5
+        HistoryT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['HistoryT'][rr - yy]
+            if n < 0:
+                HistoryT = "LONG"
+            else:
+                HistoryT = "SHORT"
+
+            if yy == 1: break
+
+        yy = 5
+        SignalT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['SignalT'][rr - yy]
+            if n < 0:
+                SignalT = "LONG"
+            else:
+                SignalT = "SHORT"
+
+            if yy == 1: break
+        yy = 5
+        SignalT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['SignalT'][rr - yy]
+            if n < 0:
+                SignalT = "LONG"
+            else:
+                SignalT = "SHORT"
+
+            if yy == 1: break
+
+        yy = 5
+        MACDT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['MACDT'][rr - yy]
+            if n < 0:
+                MACDT = "LONG"
+            else:
+                MACDT = "SHORT"
+
+            if yy == 1: break
+
+        yy = 5
+        fastdT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['fastdT'][rr - yy]
+            if n < 0:
+                fastdT = "LONG"
+            else:
+                fastdT = "SHORT"
+
+            if yy == 1: break
+
+        yy = 5
+        RSIT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['RSIT'][rr - yy]
+            if n < 0:
+                RSIT = "LONG"
+            else:
+                RSIT = "SHORT"
+
+            if yy == 1: break
+
+        yy = 5
+        OpenT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['OpenT'][rr - yy]
+            if n < 0:
+                OpenT = "LONG"
+            else:
+                OpenT = "SHORT"
+
+            if yy == 1: break
+
+        if OpenT < "LONG" and RSIT < "LONG" and fastdT < "LONG" and MACDT < "LONG" and SignalT < "LONG" and HistoryT < "LONG":
+            df['Trigger'] = "LONG"
+        else:
+            df['Trigger'] = "SHORT"
+
         print(df)
-
         with open('output.txt', 'w') as f:
             f.write(
                 df.to_string()
-            )
-        
-
-        # self.plot_graph(df)
+            )  
 
     def get_data_frame(self, symbol, msg):
         global df

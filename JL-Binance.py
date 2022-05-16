@@ -43,12 +43,14 @@ if __name__ == '__main__':
         # print(minute, ":", second)
         second += 1
 
-        main()
+        # main()
+        # quit()
 
         #ENTRY
-        if int(repr(minute)[-1]) == 5 and second == 1: #5m
-            print("ENTRY 5m")
-            print(minute, ":", second)
+        # if int(repr(minute)[-1]) == 5 and second == 1: #5m
+        #     print("ENTRY 5m")
+        #     print(minute, ":", second)
+        #     main()
             #detect toggled at 5m
 
         # if int(repr(minute)[-1]) == 0 and second == 1: #5m
@@ -67,23 +69,26 @@ if __name__ == '__main__':
         #     print("ENTRY 15m")
         #     print(minute, ":", second)
 
-        # if minute == 0 and second == 1: #15m/#30m/1h
-        #     print("ENTRY 15m/#30m/1h")
-        #     print(minute, ":", second)
+        if minute == 0 and second == 1: #15m/#30m/1h
+            print("ENTRY 15m/#30m/1h")
+            print(minute, ":", second)
+            main()
 
         #=================
         #EXIT Store Close price
-        if int(repr(minute)[-1]) == 4 and second == 59: #5m
-            print("EXIT 5m")
-            print(minute, ":", second)
+        # if int(repr(minute)[-1]) == 4 and second == 55: #5m
+        #     print("EXIT 5m")
+        #     print(minute, ":", second)
+        #     main()
 
         # if int(repr(minute)[-1]) == 9 and second == 59: #5m
         #     print("EXIT 5m")
         #     print(minute, ":", second)
 
-        # if minute == 14 and second == 59: #15m
+        # if minute == 14 and second == 55: #15m
         #     print("EXIT 15m")
         #     print(minute, ":", second)
+        #     main()
 
         # if minute == 29 and second == 59: #15m/30m
         #     print("EXIT 15m/30m")
@@ -93,9 +98,10 @@ if __name__ == '__main__':
         #     print("EXIT 15m")
         #     print(minute, ":", second)
 
-        # if minute == 59 and second == 59: #15m/#30m/1h
-        #     print("EXIT 15m/#30m/1h")
-        #     print(minute, ":", second)
+        if minute == 59 and second == 59: #15m/#30m/1h
+            print("EXIT 15m/#30m/1h")
+            print(minute, ":", second)
+            main()
 
         if second == 60:
             second = 0
@@ -110,8 +116,8 @@ if __name__ == '__main__':
         t2 = int(t1)
         server_time = datetime.fromtimestamp(t2).strftime('%Y-%m-%d %H:%M:%S')
         datetime_object = datetime.strptime(server_time, '%Y-%m-%d %H:%M:%S')
-        print(datetime_object)
-        quit()
+        # print(datetime_object)
+        # quit()
         
         time.sleep(1)
 

@@ -66,16 +66,29 @@ class PatternDetect:
                     if timeframe == "1d":
                         deltaSMA = 1000
 
+                    last_hour_date_time = datetime.now() - timedelta(hours = 1000)
+                    get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+                    msg = await client.futures_historical_klines(symbol=pair, interval="1d", start_str=get_startDate, end_str=None)
+                    data = self.get_data_frame(symbol=pair, msg=msg) 
+                    self.Pattern_Detect()                 
+                    print(f'\nRetrieving Historical data from Binance for: {pair, "1 Day"} \n')          
+
+                    last_hour_date_time = datetime.now() - timedelta(hours = 40)
+                    get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+                    msg = await client.futures_historical_klines(symbol=pair, interval='1h', start_str=get_startDate, end_str=None)
+                    data = self.get_data_frame(symbol=pair, msg=msg) 
+                    self.Pattern_Detect()                 
+                    print(f'\nRetrieving Historical data from Binance for: {pair, "1 Hour"} \n')     
+
                     last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
                     get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
                     msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
                     data = self.get_data_frame(symbol=pair, msg=msg) 
                     self.Pattern_Detect()                 
-                    print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')          
-                    
-                    print("\nVolume: %(c)s \nHigh: %(a)s Close: %(b)s Current Price: %(d)s \nRSI: %(e)s SMA: %(f)s \nQTY: %(g)s \nSIDE: %(i)s \nEntry Price: %(k)s \nTake Profit: %(j)s \n" % 
-                        {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'i':side, 
-                        'j':take_profit, 'k':entry_price})
+                    print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')     
+                    # print("\nVolume: %(c)s \nHigh: %(a)s Close: %(b)s Current Price: %(d)s \nRSI: %(e)s SMA: %(f)s \nQTY: %(g)s \nSIDE: %(i)s \nEntry Price: %(k)s \nTake Profit: %(j)s \n" % 
+                    #     {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'i':side, 
+                    #     'j':take_profit, 'k':entry_price})
 
                     # CreateOrder.futures_order(pair, qty, entry_price, side, order_type, take_profit, timeframe)
                     # print('------------futures_order------------')
@@ -117,72 +130,69 @@ class PatternDetect:
         df['Signal'] = round(macdsignal)
         df['History'] = round(macdhist)                 
         rr = len(df.index)
-        df['OpenT'] = np.where(df["Open"][rr - 4] < df['Close'], 1, -1)
-        df['BOPT'] = np.where(df["BOP"][rr - 4] < df['BOP'], 1, -1)
-        df['RSIT'] = np.where(df["RSI"][rr - 4] < df['RSI'], 1, -1)
-        df['fastdT'] = np.where(df["fastd"][rr - 4] < df['fastd'], 1, -1)
-        df['MACDT'] = np.where(df["MACD"][rr - 4] < df['MACD'], 1, -1)
-        df['SignalT'] = np.where(df["Signal"][rr - 4] < df['Signal'], 1, -1)
-        df['HistoryT'] = np.where(df["History"][rr - 4] < df['History'], 1, -1)
+        df['OpenT'] = np.where(df["Open"][rr - 4] < df['Close'], -1, 1)
+        df['BOPT'] = np.where(df["BOP"][rr - 4] < df['BOP'], -1, 1)
+        df['RSIT'] = np.where(df["RSI"][rr - 4] < df['RSI'], -1, 1)
+        df['fastdT'] = np.where(df["fastd"][rr - 4] < df['fastd'], -1, 1)
+        df['MACDT'] = np.where(df["MACD"][rr - 4] < df['MACD'], -1, 1)
+        df['SignalT'] = np.where(df["Signal"][rr - 4] < df['Signal'], -1, 1)
+        df['HistoryT'] = np.where(df["History"][rr - 4] < df['History'], -1, 1)
+
+        # Cross Entry test
+        # Support current TF by Higher TF
+        # Multiple API Code
+        # Quantity Test orders
+        # Leverage Changer
+        # Check orders and monitor
+        # Signals must read 4 3 2 1
+        # PNL Calculation
+        # https://stackoverflow.com/questions/67643077/how-can-i-adjust-the-leverage-with-bianance-api
+        # https://dev.binance.vision/t/how-to-calculate-cumb-while-calculating-liquidation-price/883
+        # https://www.binance.com/en/support/faq/b3c689c1f50a44cabb3a84e663b81d93
+        # https://gist.github.com/highfestiva/b71e76f51eed84d56c1be8ebbcc286b5?permalink_comment_id=3617078
+        # https://binance-docs.github.io/apidocs/futures/en/#change-log
+
+        yy = 5
+        OpenT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['OpenT'][rr - yy]
+            # if yy == 4: 
+            #     n = -1
+            #     df['OpenT'] = np.where(df["Open"][rr - 4] < df['Close'], -1, -1)
+
+            if n < 0:
+                OpenT = "SHORT"
+            else:
+                OpenT = "LONG"
+
+            if yy == 1: break
 
         yy = 5
         BOPT = "NONE"
         BOP = 0
         for y in df:
             yy -= 1
-            n = df['BOPT'][rr - yy]
-            BOP += n
-            # if n < 0:
-            #     BOPT = "LONG"
-            # else:
-            #     BOPT = "SHORT"
+            # n = df['BOP'][rr - yy]
+            # print(df['BOP'][rr - yy])
 
-            if yy == 1: break
-        print(BOP)
-        yy = 5
-        HistoryT = "NONE"
-        for y in df:
-            yy -= 1
-            n = df['HistoryT'][rr - yy]
-            if n < 0:
-                HistoryT = "LONG"
-            else:
-                HistoryT = "SHORT"
+            # BOP += n
 
             if yy == 1: break
 
-        yy = 5
-        SignalT = "NONE"
-        for y in df:
-            yy -= 1
-            n = df['SignalT'][rr - yy]
-            if n < 0:
-                SignalT = "LONG"
-            else:
-                SignalT = "SHORT"
-
-            if yy == 1: break
-        yy = 5
-        SignalT = "NONE"
-        for y in df:
-            yy -= 1
-            n = df['SignalT'][rr - yy]
-            if n < 0:
-                SignalT = "LONG"
-            else:
-                SignalT = "SHORT"
-
-            if yy == 1: break
+        # print(BOP) # Error
+        # print(BOPT)
+        # quit()
 
         yy = 5
-        MACDT = "NONE"
+        RSIT = "NONE"
         for y in df:
             yy -= 1
-            n = df['MACDT'][rr - yy]
+            n = df['RSIT'][rr - yy]
             if n < 0:
-                MACDT = "LONG"
+                RSIT = "SHORT"
             else:
-                MACDT = "SHORT"
+                RSIT = "LONG"
 
             if yy == 1: break
 
@@ -192,49 +202,72 @@ class PatternDetect:
             yy -= 1
             n = df['fastdT'][rr - yy]
             if n < 0:
-                fastdT = "LONG"
-            else:
                 fastdT = "SHORT"
+            else:
+                fastdT = "LONG"
 
             if yy == 1: break
 
         yy = 5
-        RSIT = "NONE"
+        MACDT = "NONE"
         for y in df:
             yy -= 1
-            n = df['RSIT'][rr - yy]
+            n = df['MACDT'][rr - yy]
             if n < 0:
-                RSIT = "LONG"
+                MACDT = "SHORT"
             else:
-                RSIT = "SHORT"
+                MACDT = "LONG"
 
             if yy == 1: break
 
         yy = 5
-        OpenT = "NONE"
+        SignalT = "NONE"
         for y in df:
             yy -= 1
-            n = df['OpenT'][rr - yy]
+            n = df['SignalT'][rr - yy]
             if n < 0:
-                OpenT = "LONG"
+                SignalT = "LONG"
             else:
-                OpenT = "SHORT"
+                SignalT = "SHORT"
 
             if yy == 1: break
 
-        if OpenT < "LONG" and BOPT < "LONG" and RSIT < "LONG" and fastdT < "LONG" and MACDT < "LONG" and SignalT < "LONG" and HistoryT < "LONG":
-            print("BUY")
-            # df['Trigger'] = "LONG"
+        yy = 5
+        HistoryT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['HistoryT'][rr - yy]
+            if n < 0:
+                HistoryT = "SHORT"
+            else:
+                HistoryT = "LONG"
+
+            if yy == 1: break
+
+        # print(OpenT)
+        # print(RSIT)
+        # print(fastdT)
+        # print(MACDT)
+        # print(SignalT)        
+        # print(HistoryT)
+
+        if OpenT == "LONG" and BOPT == "LONG" and RSIT == "LONG" and fastdT == "LONG" and MACDT == "LONG" and SignalT == "LONG" and HistoryT == "LONG":
+            print("======== B U Y =======")
             side = "BUY"
-        elif OpenT > "LONG" and RSIT > "LONG" and fastdT > "LONG" and MACDT > "LONG" and SignalT > "LONG" and HistoryT > "LONG":
-            print("SELL")
-            # df['Trigger'] = "SHORT"
+        elif OpenT == "SHORT" and BOPT == "SHORT" and RSIT == "SHORT" and fastdT == "SHORT" and MACDT == "SHORT" and SignalT == "SHORT" and HistoryT == "SHORT":
+            print("======= S E L L =======")
             side = "SELL"
+        #dldl
 
-        print(df)
+        pp = df.tail(4)
+        print(pp)
+        val = pp['OpenT'].value_counts()
+        # print(val[0:1]) #- Column
+        # print(val[0:2]) #+ Column
+
         with open('output.txt', 'w') as f:
             f.write(
-                df.to_string()
+                pp.to_string()
             )  
 
     def d_Candle(self):

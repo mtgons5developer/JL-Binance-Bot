@@ -38,6 +38,8 @@ if __name__ == '__main__':
     minute = int(datetime_object.strftime("%M"))
     second = int(datetime_object.strftime("%S"))  
 
+    main()
+    
     while 1 == 1: 
         # timer = minute + ":" + second
         # print(minute, ":", second)
@@ -69,10 +71,10 @@ if __name__ == '__main__':
         #     print("ENTRY 15m")
         #     print(minute, ":", second)
 
-        if minute == 0 and second == 1: #15m/#30m/1h
-            print("ENTRY 15m/#30m/1h")
-            print(minute, ":", second)
-            main()
+        # if minute == 0 and second == 1: #15m/#30m/1h
+        #     print("ENTRY 15m/#30m/1h")
+        #     print(minute, ":", second)
+        #     main()
 
         #=================
         #EXIT Store Close price

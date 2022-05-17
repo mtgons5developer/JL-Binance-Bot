@@ -66,12 +66,19 @@ class PatternDetect:
                     if timeframe == "1d":
                         deltaSMA = 1000
 
-                    last_hour_date_time = datetime.now() - timedelta(hours = 1000)
-                    get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
-                    msg = await client.futures_historical_klines(symbol=pair, interval="1d", start_str=get_startDate, end_str=None)
-                    data = self.get_data_frame(symbol=pair, msg=msg) 
-                    self.Pattern_Detect()                 
-                    print(f'\nRetrieving Historical data from Binance for: {pair, "1 Day"} \n')          
+                    # last_hour_date_time = datetime.now() - timedelta(hours = 1000)
+                    # get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+                    # msg = await client.futures_historical_klines(symbol=pair, interval="1d", start_str=get_startDate, end_str=None)
+                    # data = self.get_data_frame(symbol=pair, msg=msg) 
+                    # self.Pattern_Detect()                 
+                    # print(f'\nRetrieving Historical data from Binance for: {pair, "1 Day"} \n')          
+
+                    # last_hour_date_time = datetime.now() - timedelta(hours = 140)
+                    # get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+                    # msg = await client.futures_historical_klines(symbol=pair, interval='4h', start_str=get_startDate, end_str=None)
+                    # data = self.get_data_frame(symbol=pair, msg=msg) 
+                    # self.Pattern_Detect()                 
+                    # print(f'\nRetrieving Historical data from Binance for: {pair, "4 Hours"} \n')     
 
                     last_hour_date_time = datetime.now() - timedelta(hours = 40)
                     get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -79,6 +86,13 @@ class PatternDetect:
                     data = self.get_data_frame(symbol=pair, msg=msg) 
                     self.Pattern_Detect()                 
                     print(f'\nRetrieving Historical data from Binance for: {pair, "1 Hour"} \n')     
+
+                    last_hour_date_time = datetime.now() - timedelta(hours = 40)
+                    get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+                    msg = await client.futures_historical_klines(symbol=pair, interval='30m', start_str=get_startDate, end_str=None)
+                    data = self.get_data_frame(symbol=pair, msg=msg) 
+                    self.Pattern_Detect()                 
+                    print(f'\nRetrieving Historical data from Binance for: {pair, "30 min"} \n')     
 
                     last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
                     get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -130,7 +144,7 @@ class PatternDetect:
         df['Signal'] = round(macdsignal)
         df['History'] = round(macdhist)                 
         rr = len(df.index)
-        df['OpenT'] = np.where(df["Open"][rr - 4] < df['Close'], -1, 1)
+        # df['OpenT'] = np.where(df["Open"][rr - 4] < df['Close'], -1, 1)
         df['BOPT'] = np.where(df["BOP"][rr - 4] < df['BOP'], -1, 1)
         df['RSIT'] = np.where(df["RSI"][rr - 4] < df['RSI'], -1, 1)
         df['fastdT'] = np.where(df["fastd"][rr - 4] < df['fastd'], -1, 1)
@@ -138,8 +152,15 @@ class PatternDetect:
         df['SignalT'] = np.where(df["Signal"][rr - 4] < df['Signal'], -1, 1)
         df['HistoryT'] = np.where(df["History"][rr - 4] < df['History'], -1, 1)
 
+        # X Pump/Support
+        # Detect a battle and BOP has higher signal from all.
+        # Separate code for signals
         # Cross Entry test
+        # Show Win rate in %, select win rate entry.
+        # Not enough balance.
+        # Insuffient Margin balance.
         # Support current TF by Higher TF
+        # Cancel all existing trades.
         # Multiple API Code
         # Quantity Test orders
         # Leverage Changer
@@ -152,21 +173,21 @@ class PatternDetect:
         # https://gist.github.com/highfestiva/b71e76f51eed84d56c1be8ebbcc286b5?permalink_comment_id=3617078
         # https://binance-docs.github.io/apidocs/futures/en/#change-log
 
-        yy = 5
-        OpenT = "NONE"
-        for y in df:
-            yy -= 1
-            n = df['OpenT'][rr - yy]
-            # if yy == 4: 
-            #     n = -1
-            #     df['OpenT'] = np.where(df["Open"][rr - 4] < df['Close'], -1, -1)
+        # yy = 5
+        # OpenT = "NONE"
+        # for y in df:
+        #     yy -= 1
+        #     n = df['OpenT'][rr - yy]
+        #     # if yy == 4: 
+        #     #     n = -1
+        #     #     df['OpenT'] = np.where(df["Open"][rr - 4] < df['Close'], -1, -1)
 
-            if n < 0:
-                OpenT = "SHORT"
-            else:
-                OpenT = "LONG"
+        #     if n < 0:
+        #         OpenT = "SHORT"
+        #     else:
+        #         OpenT = "LONG"
 
-            if yy == 1: break
+        #     if yy == 1: break
 
         yy = 5
         BOPT = "NONE"
@@ -248,20 +269,20 @@ class PatternDetect:
         # print(RSIT)
         # print(fastdT)
         # print(MACDT)
-        # print(SignalT)        
+        # print(SignalT)
         # print(HistoryT)
 
-        if OpenT == "LONG" and BOPT == "LONG" and RSIT == "LONG" and fastdT == "LONG" and MACDT == "LONG" and SignalT == "LONG" and HistoryT == "LONG":
+        if BOPT == "LONG" and RSIT == "LONG" and fastdT == "LONG" and MACDT == "LONG" and SignalT == "LONG" and HistoryT == "LONG":
             print("======== B U Y =======")
             side = "BUY"
-        elif OpenT == "SHORT" and BOPT == "SHORT" and RSIT == "SHORT" and fastdT == "SHORT" and MACDT == "SHORT" and SignalT == "SHORT" and HistoryT == "SHORT":
+        elif BOPT == "SHORT" and RSIT == "SHORT" and fastdT == "SHORT" and MACDT == "SHORT" and SignalT == "SHORT" and HistoryT == "SHORT":
             print("======= S E L L =======")
             side = "SELL"
         #dldl
 
         pp = df.tail(4)
         print(pp)
-        val = pp['OpenT'].value_counts()
+        # val = pp['OpenT'].value_counts()
         # print(val[0:1]) #- Column
         # print(val[0:2]) #+ Column
 

@@ -139,54 +139,65 @@ class PatternDetect:
         fastk, fastd = talib.STOCHRSI(df['Close'], timeperiod=14, fastk_period=5, fastd_period=3, fastd_matype=0)
 
         df['BOP'] = round(BOP, 2)
-        df['RSI'] = round(RSI)
+        # df['RSI'] = round(RSI)
         df['fastd'] = round(fastd)
-        df['MACD'] = round(macd )
-        df['Signal'] = round(macdsignal)
-        df['History'] = round(macdhist)                 
+        df['fastk'] = round(fastk)
+
+        # df['MACD'] = round(macd )
+        # df['Signal'] = round(macdsignal)
+        # df['History'] = round(macdhist)                 
         rr = len(df.index)
 
         pp = df.tail(3)
         dd = pd.DataFrame(pp)
-        dd = dd.loc[:, ['Time', 'BOP', 'RSI', 'fastd', 'MACD', 'Signal', 'History']]
+        dd = dd.loc[:, ['Time', 'BOP', 'fastd', 'fastk']]
+        # dd = dd.loc[:, ['Time', 'BOP', 'RSI', 'fastd', 'MACD', 'Signal', 'History']]
         BOPS = np.where(df["BOP"][rr - 3] > df['BOP'][rr -2], -1, 1)
-        RSIS = np.where(df["RSI"][rr - 3] > df['RSI'][rr -2], -1, 1)
+        # RSIS = np.where(df["RSI"][rr - 3] > df['RSI'][rr -2], -1, 1)
         fastdS = np.where(df["fastd"][rr - 3] > df['fastd'][rr -2], -1, 1)
-        MACDS = np.where(df["MACD"][rr - 3] > df['MACD'][rr -2], -1, 1)
-        SignalS = np.where(df["Signal"][rr - 3] > df['Signal'][rr -2], -1, 1)
-        HistoryS = np.where(df["History"][rr - 3] > df['History'][rr -2], -1, 1)                                
+        fastkS = np.where(df["fastk"][rr - 3] > df['fastk'][rr -2], -1, 1)
+        # MACDS = np.where(df["MACD"][rr - 3] > df['MACD'][rr -2], -1, 1)
+        # SignalS = np.where(df["Signal"][rr - 3] > df['Signal'][rr -2], -1, 1)
+        # HistoryS = np.where(df["History"][rr - 3] > df['History'][rr -2], -1, 1)                                
 
         dd['BOPT'] = BOPS
-        dd['RSIT'] = RSIS
+        # dd['RSIT'] = RSIS
         dd['fastdT'] = fastdS
-        dd['MACDT'] = MACDS
-        dd['SignalT'] = SignalS
-        dd['HistoryT'] = HistoryS
+        dd['fastkT'] = fastkS
+        # dd['MACDT'] = MACDS
+        # dd['SignalT'] = SignalS
+        # dd['HistoryT'] = HistoryS
         
-        Position = BOPS + RSIS + fastdS + MACDS + SignalS + HistoryS
+        Position = BOPS + fastdS
 
         signal1 = 0
         signal2 = 0
 
-        if Position >= 4: 
+        if Position == 2: 
             signal1 = 1
-        else: 
+        elif Position < 0:
             signal1 = -1
+        else: 
+            signal1 = 0
 
-        BOP2 = float(df['BOP'][rr -2])
+        BOP2 = float(df['BOP'][rr - 2])
 
         if BOP2 < 0.5 and BOP2 >= 0: 
             signal2 = 1
-        elif BOP2 < -0.6:
+        elif BOP2 < -0.6 and BOP2 >= -0.9:
             signal2 = 1
-        else:
+        elif BOP2 > 0.5 and BOP2 <= 0.9: 
             signal2 = -1
+        elif BOP2 > -0.6 and BOP2 >= -0.1:
+            signal2 = -1
+        else:
+            signal2 = 0
 
         signalT = signal1 + signal2
 
         if signalT == 2:
             side = "BUY"
-        elif signalT == -2:
+        elif signalT < 0:
             side = "SELL"
         else:
             side = "NONE"

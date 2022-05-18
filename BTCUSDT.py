@@ -80,26 +80,27 @@ class PatternDetect:
                     # self.Pattern_Detect()                 
                     # print(f'\nRetrieving Historical data from Binance for: {pair, "4 Hours"} \n')     
 
-                    last_hour_date_time = datetime.now() - timedelta(hours = 40)
+                    last_hour_date_time = datetime.now() - timedelta(hours = 200)
                     get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
-                    msg = await client.futures_historical_klines(symbol=pair, interval='1h', start_str=get_startDate, end_str=None)
+                    msg = await client.futures_historical_klines(symbol=pair, interval='6h', start_str=get_startDate, end_str=None)
                     data = self.get_data_frame(symbol=pair, msg=msg) 
                     self.Pattern_Detect()                 
-                    print(f'\nRetrieving Historical data from Binance for: {pair, "1 Hour"} \n')     
+                    print(f'\nRetrieving Historical data from Binance for: {pair, "6 Hour"} \n')     
 
-                    last_hour_date_time = datetime.now() - timedelta(hours = 40)
-                    get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
-                    msg = await client.futures_historical_klines(symbol=pair, interval='30m', start_str=get_startDate, end_str=None)
-                    data = self.get_data_frame(symbol=pair, msg=msg) 
-                    self.Pattern_Detect()                 
-                    print(f'\nRetrieving Historical data from Binance for: {pair, "30 min"} \n')     
+                    # last_hour_date_time = datetime.now() - timedelta(hours = 40)
+                    # get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+                    # msg = await client.futures_historical_klines(symbol=pair, interval='30m', start_str=get_startDate, end_str=None)
+                    # data = self.get_data_frame(symbol=pair, msg=msg) 
+                    # self.Pattern_Detect()                 
+                    # print(f'\nRetrieving Historical data from Binance for: {pair, "30 min"} \n')     
 
-                    last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
-                    get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
-                    msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
-                    data = self.get_data_frame(symbol=pair, msg=msg) 
-                    self.Pattern_Detect()                 
-                    print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')     
+                    # last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
+                    # get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+                    # msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
+                    # data = self.get_data_frame(symbol=pair, msg=msg) 
+                    # self.Pattern_Detect()                 
+                    # print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')   
+
                     # print("\nVolume: %(c)s \nHigh: %(a)s Close: %(b)s Current Price: %(d)s \nRSI: %(e)s SMA: %(f)s \nQTY: %(g)s \nSIDE: %(i)s \nEntry Price: %(k)s \nTake Profit: %(j)s \n" % 
                     #     {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'i':side, 
                     #     'j':take_profit, 'k':entry_price})
@@ -137,21 +138,28 @@ class PatternDetect:
         macd, macdsignal, macdhist = talib.MACD(df['Close'], fastperiod=3, slowperiod=10, signalperiod=16) #HIGH TF
         fastk, fastd = talib.STOCHRSI(df['Close'], timeperiod=14, fastk_period=5, fastd_period=3, fastd_matype=0)
 
+        # df = df.tail(4)
+        # print(df)
         df['BOP'] = round(BOP, 1)
         df['RSI'] = round(RSI)
         df['fastd'] = round(fastd)
+        df['fastk'] = round(fastk)
         df['MACD'] = round(macd )
         df['Signal'] = round(macdsignal)
         df['History'] = round(macdhist)                 
         rr = len(df.index)
         # df['OpenT'] = np.where(df["Open"][rr - 4] < df['Close'], -1, 1)
-        df['BOPT'] = np.where(df["BOP"][rr - 4] < df['BOP'], -1, 1)
-        df['RSIT'] = np.where(df["RSI"][rr - 4] < df['RSI'], -1, 1)
-        df['fastdT'] = np.where(df["fastd"][rr - 4] < df['fastd'], -1, 1)
-        df['MACDT'] = np.where(df["MACD"][rr - 4] < df['MACD'], -1, 1)
-        df['SignalT'] = np.where(df["Signal"][rr - 4] < df['Signal'], -1, 1)
-        df['HistoryT'] = np.where(df["History"][rr - 4] < df['History'], -1, 1)
+        # df['BOPT'] = np.where(df["BOP"][rr - 4] < df['BOP'], -1, 1)
+        # df['RSIT'] = np.where(df["RSI"][rr - 4] < df['RSI'], -1, 1)
+        # df['fastdT'] = np.where(df["fastd"][rr - 4] < df['fastd'], -1, 1)
+        # df['fastkT'] = np.where(df["fastk"][rr - 4] < df['fastk'], -1, 1)
+        # df['MACDT'] = np.where(df["MACD"][rr - 4] < df['MACD'], -1, 1)
+        # df['SignalT'] = np.where(df["Signal"][rr - 4] < df['Signal'], -1, 1)
+        # df['HistoryT'] = np.where(df["History"][rr - 4] < df['History'], -1, 1)
+        # print(df)
+        # quit()
 
+        # Find fastd+fastk on all TF= 0 / Create per second TF for fastd+fastk
         # X Pump/Support
         # Detect a battle and BOP has higher signal from all.
         # Separate code for signals
@@ -174,122 +182,91 @@ class PatternDetect:
         # https://binance-docs.github.io/apidocs/futures/en/#change-log
 
         # yy = 5
-        # OpenT = "NONE"
+        # RSIT = "NONE"
         # for y in df:
         #     yy -= 1
-        #     n = df['OpenT'][rr - yy]
-        #     # if yy == 4: 
-        #     #     n = -1
-        #     #     df['OpenT'] = np.where(df["Open"][rr - 4] < df['Close'], -1, -1)
-
+        #     n = df['RSIT'][rr - yy]
         #     if n < 0:
-        #         OpenT = "SHORT"
+        #         RSIT = "SHORT"
         #     else:
-        #         OpenT = "LONG"
+        #         RSIT = "LONG"
 
         #     if yy == 1: break
 
-        yy = 5
-        BOPT = "NONE"
-        BOP = 0
-        for y in df:
-            yy -= 1
-            # n = df['BOP'][rr - yy]
-            # print(df['BOP'][rr - yy])
+        # yy = 5
+        # fastdT = "NONE"
+        # for y in df:
+        #     yy -= 1
+        #     n = df['fastdT'][rr - yy]
+        #     if n < 0:
+        #         fastdT = "SHORT"
+        #     else:
+        #         fastdT = "LONG"
 
-            # BOP += n
+        #     if yy == 1: break
 
-            if yy == 1: break
+        # yy = 5
+        # MACDT = "NONE"
+        # for y in df:
+        #     yy -= 1
+        #     n = df['MACDT'][rr - yy]
+        #     if n < 0:
+        #         MACDT = "SHORT"
+        #     else:
+        #         MACDT = "LONG"
 
-        # print(BOP) # Error
-        # print(BOPT)
-        # quit()
+        #     if yy == 1: break
 
-        yy = 5
-        RSIT = "NONE"
-        for y in df:
-            yy -= 1
-            n = df['RSIT'][rr - yy]
-            if n < 0:
-                RSIT = "SHORT"
-            else:
-                RSIT = "LONG"
+        # yy = 5
+        # SignalT = "NONE"
+        # for y in df:
+        #     yy -= 1
+        #     n = df['SignalT'][rr - yy]
+        #     if n < 0:
+        #         SignalT = "LONG"
+        #     else:
+        #         SignalT = "SHORT"
 
-            if yy == 1: break
+        #     if yy == 1: break
 
-        yy = 5
-        fastdT = "NONE"
-        for y in df:
-            yy -= 1
-            n = df['fastdT'][rr - yy]
-            if n < 0:
-                fastdT = "SHORT"
-            else:
-                fastdT = "LONG"
+        # yy = 5
+        # HistoryT = "NONE"
+        # for y in df:
+        #     yy -= 1
+        #     n = df['HistoryT'][rr - yy]
+        #     if n < 0:
+        #         HistoryT = "SHORT"
+        #     else:
+        #         HistoryT = "LONG"
 
-            if yy == 1: break
+        #     if yy == 1: break
 
-        yy = 5
-        MACDT = "NONE"
-        for y in df:
-            yy -= 1
-            n = df['MACDT'][rr - yy]
-            if n < 0:
-                MACDT = "SHORT"
-            else:
-                MACDT = "LONG"
-
-            if yy == 1: break
-
-        yy = 5
-        SignalT = "NONE"
-        for y in df:
-            yy -= 1
-            n = df['SignalT'][rr - yy]
-            if n < 0:
-                SignalT = "LONG"
-            else:
-                SignalT = "SHORT"
-
-            if yy == 1: break
-
-        yy = 5
-        HistoryT = "NONE"
-        for y in df:
-            yy -= 1
-            n = df['HistoryT'][rr - yy]
-            if n < 0:
-                HistoryT = "SHORT"
-            else:
-                HistoryT = "LONG"
-
-            if yy == 1: break
-
-        # print(OpenT)
         # print(RSIT)
         # print(fastdT)
         # print(MACDT)
         # print(SignalT)
         # print(HistoryT)
+        # side = "NONE"
 
-        if BOPT == "LONG" and RSIT == "LONG" and fastdT == "LONG" and MACDT == "LONG" and SignalT == "LONG" and HistoryT == "LONG":
-            print("======== B U Y =======")
-            side = "BUY"
-        elif BOPT == "SHORT" and RSIT == "SHORT" and fastdT == "SHORT" and MACDT == "SHORT" and SignalT == "SHORT" and HistoryT == "SHORT":
-            print("======= S E L L =======")
-            side = "SELL"
+        # if RSIT == "LONG" and fastdT == "LONG" and MACDT == "LONG" and SignalT == "LONG" and HistoryT == "LONG":
+        #     print("======== B U Y =======")
+        #     side = "BUY"
+        # elif RSIT == "SHORT" and fastdT == "SHORT" and MACDT == "SHORT" and SignalT == "SHORT" and HistoryT == "SHORT":
+        #     print("======= S E L L =======")
+        #     side = "SELL"
         #dldl
 
         pp = df.tail(4)
         print(pp)
+        print(side)
         # val = pp['OpenT'].value_counts()
         # print(val[0:1]) #- Column
         # print(val[0:2]) #+ Column
 
-        with open('output.txt', 'w') as f:
-            f.write(
-                pp.to_string()
-            )  
+        # with open('output.txt', 'w') as f:
+        #     f.write(
+        #         pp.to_string()
+        #     )  
 
     def d_Candle(self):
         global open
@@ -299,19 +276,6 @@ class PatternDetect:
         tt = str(cc[rw - 1])
         open = float(tt)
         # print(open)
-
-    def d_RSI(self):
-        global rsi, error_set
-
-        rsi = talib.RSI(df["Close"])
-        rw = len(df.index)
-        tt = str(rsi[rw - 1])
-        rsi = round(float(tt))
-
-        if tt == "nan":
-            print("\n RSI: ERROR deltatime adjust to a higher value\n")
-            # db.put_dateErrorRSI(timeframe, pair)
-            error_set = 1
 
 #=====================================================================================================================
 

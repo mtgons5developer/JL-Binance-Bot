@@ -94,9 +94,9 @@ class PatternDetect:
                     # self.Pattern_Detect()                 
                     # print(f'\nRetrieving Historical data from Binance for: {pair, "30 min"} \n')     
 
-                    last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
+                    last_hour_date_time = datetime.now() - timedelta(hours = 200)
                     get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
-                    msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
+                    msg = await client.futures_historical_klines(symbol=pair, interval='6h', start_str=get_startDate, end_str=None)
                     data = self.get_data_frame(symbol=pair, msg=msg) 
                     self.Pattern_Detect()                 
                     print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')   
@@ -164,17 +164,17 @@ class PatternDetect:
 
         # print(dd)
 
-        # 26  2022-05-11 10:00:00  31742.2  32197.6  31555.0  31835.0  0.14  55.0  100.0  100.0
-        # 27  2022-05-11 11:00:00  31835.1  31895.8  31452.0  31517.1 -0.72  51.0   91.0   73.0
+        # 42 2022-05-16 04:00:00  30314.9  30436.9  30105.0  30313.9 -0.00  50.0    0.0    0.0
+        # 43 2022-05-16 05:00:00  30313.4  30461.3  30233.0  30280.0 -0.15  49.0    0.0    0.0 
 
-        BOP3 = 0.14  
-        RSI3 = 55.0   
-        fastd3 = 100.0   
-        fastk3 = 100.0
-        BOP2 = -0.72
-        RSI2 = 51.0   
-        fastd2 = 91.0  
-        fastk2 = 73
+        # BOP3 = 0.40  
+        # RSI3 = 59.0   
+        # fastd3 = 67.0   
+        # fastk3 = 100.0
+        # BOP2 = 0.39
+        # RSI2 = 60.0   
+        # fastd2 = 67.0  
+        # fastk2 = 100
 
                         #   Time     Open     High      Low    Close   BOP   RSI  fastd  fastk
         # 67 2022-05-17 05:00:00  30365.1  30519.3  30260.2  30445.6  0.31  58.0  100.0  100.0
@@ -256,12 +256,13 @@ class PatternDetect:
             print(dd)
             print(side)
         else:
-            print(side) 
+            print(dd) 
+            print(side)
 
-        with open('output.txt', 'w') as f:
-            f.write(
-                dd.to_string()
-            )
+        # with open('output.txt', 'w') as f:
+        #     f.write(
+        #         dd.to_string()
+        #     )
             
 #=====================================================================================================================
 

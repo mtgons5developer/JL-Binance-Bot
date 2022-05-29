@@ -62,6 +62,14 @@ class PatternDetect:
                     minute = int(datetime_object.strftime("%M"))
                     second = int(datetime_object.strftime("%S"))
 
+                    if timeframe == "3m": 
+                        deltaSMA = 10
+                    if timeframe == "5m":
+                        deltaSMA = 12
+                    if timeframe == "15m":
+                        deltaSMA = 16
+                    if timeframe == "30m":
+                        deltaSMA = 24
                     if timeframe == "1h":
                         deltaSMA = 40
                     if timeframe == "2h":
@@ -89,9 +97,13 @@ class PatternDetect:
                     print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')
 
                     if side != "NONE":
-
-                        entry_price = 26000
-                        take_profit = 27000
+                        
+                        if side != "SELL":
+                            entry_price = 26000
+                            take_profit = 27000
+                        else:
+                            entry_price = 30000
+                            take_profit = 27000                            
                         CreateOrder.futures_order(pair, qty, side, order_type, take_profit, timeframe, entry_price)
                         timer()
 
@@ -99,10 +111,10 @@ class PatternDetect:
 
                             while 1 == 1:
 
-                                second += 1
-                                print(second)
+                                secondd += 1
+                                print(minutee, secondd)
 
-                                if second == 45:
+                                if second == 55:
                                     result = db.get_status(pair)
 
                                     yy = 0
@@ -113,26 +125,37 @@ class PatternDetect:
                                     for x in result:
                                         xx += 1
                                         orderIdTP = x['orderIdTP']
+                                        orderId = x['orderId']
 
                                 status = CreateOrder.check_order(orderIdTP, pair)
-                                if status == "FILED":
+
+                                if status != "NEW":
+
+                                    print("EXIT FILLED")
                                     break
+
+                                elif hourr == hour1 and minutee == 59 and secondd == 55:
+
+                                    CreateOrder.cancel_order(orderId, pair)
+                                    print("EXIT by Time Frame")
+
                                 timer()
                                                                     
-                                if second == 60:
-                                    second = 0
-                                    minute += 1
+                                if secondd == 60:
+                                    secondd = 0
+                                    minutee += 1
                                 
-                                if minute == 60:
-                                    minute = 0
-                                
+                                if minutee == 60:
+                                    minutee = 0                                
+
                                 time.sleep(1)
                         else:
-                            orderIdTP = "55640823848"
+                            print("EXIT")
+                            # orderIdTP = "55640823848"
+                            # status = CreateOrder.check_order(orderIdTP, pair)
+                            # print(status)
                             # quit()
-                            status = CreateOrder.check_order(orderIdTP, pair)
-                            print(status)
-                            quit()
+                            break
 
                     await client.close_connection()
 

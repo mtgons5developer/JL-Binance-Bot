@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 import mysql.connector
 from mysql.connector import errorcode
 
@@ -15,29 +13,32 @@ class call:
         try:
             cursor.execute("SELECT order_type, timeframe, pair, qty, vol, deltaSMA, rsiLong, rsiShort  FROM settings WHERE toggle='1'")
             toggle = cursor.fetchall()
+            cursor.close()
             cnx.close()
 
             return toggle
 
         except:
+            cursor.close()
             cnx.close()
 
     #====================
 
-    def get_status(self, timeframe):
+    def get_status(self, pair):
         
         self.get_cnx()
         cursor = cnx.cursor(dictionary=True)
 
         try:
-            cursor.execute("SELECT pair FROM settings WHERE timeframe='" + timeframe + "' AND toggle='1'")
-            myresult = cursor.fetchall()
-            # print(myresult)
+            cursor.execute("SELECT timeframe, orderId, orderIdTP, entry_date, pair, order_type  FROM order_entry WHERE pair='" + pair + "' AND " + "status='1'")
+            status = cursor.fetchall()
+            cursor.close()
             cnx.close()
-            # print("-MySQL connection closed-")
-            return myresult
+
+            return status
 
         except:
+            cursor.close()
             cnx.close()
 
     def get_TH_pair(self, uuid):
@@ -172,6 +173,22 @@ class call:
         query = """INSERT IGNORE INTO order_entry (pair, qty, entryPrice, status, side, order_type, timeframe, close_pos) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
 
         values = (pair, float(qty), float(entry_price), "1", side, order_type, timeframe, int(take_profit))
+
+        cursor.execute(query, values)
+            
+        cnx.commit()
+        cursor.close()
+        cnx.close()
+        print("Completed")
+
+    def put_orderTest_Exit(self, pair, order_type, timeframe, win_lose):
+
+        self.get_cnx()
+        cursor = cnx.cursor()
+
+        query = """INSERT IGNORE INTO order_entry (pair, status, timeframe, win_lose) VALUES (%s, %s, %s, %s)"""
+
+        values = (pair, "2", order_type, timeframe, win_lose)
 
         cursor.execute(query, values)
             

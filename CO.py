@@ -19,30 +19,29 @@ client = Client(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
 class call:
 # =============================FUTURES=============================
                       
-    def futures_order(self, pair, qty, entry_price, side, order_type, take_profit, timeframe):
+    def futures_order(self, pair, qty, side, order_type, take_profit, timeframe, entry_price):
 
         try:
-            if order_type == "MARKET":
+            # if order_type == "MARKET":
+            #     order = client.futures_create_order(
+            #         symbol=pair,
+            #         side=side,
+            #         type=order_type,
+            #         quantity=qty,            
+            #         recvWindow=2000)
+            order_type = "LIMIT"
+            if order_type == "LIMIT":
                 order = client.futures_create_order(
                     symbol=pair,
                     side=side,
                     type=order_type,
                     timeInForce='GTC',
-                    quantity=qty,            
-                    recvWindow=2000)
-            # order_type = "LIMIT"
-            # if order_type == "LIMIT":
-            #     order = client.futures_create_order(
-            #         symbol=pair,
-            #         side=side,
-            #         type=order_type,
-            #         timeInForce='GTC',
-            #         quantity=qty,
-            #         recvWindow=2000,
-            #         price=entry_price)
+                    quantity=qty,
+                    recvWindow=2000,
+                    price=entry_price)
 
             if order_type == "MARKET" or order_type == "LIMIT":
-
+                print("test")
                 orderId = order["orderId"]
                 market_price = order["price"]
                                                                                             
@@ -58,20 +57,21 @@ class call:
                     type="TAKE_PROFIT_MARKET",
                     timeInForce='GTC',
                     stopPrice=take_profit,
-                    quantity=1,    
+                    quantity=1,
                     reduceOnly=True,
                     workingType= 'MARK_PRICE')
 
                 orderIdTP = order2["orderId"]
                 status = 1
-                db.put_orderID(pair, orderId, market_price, qty, status, take_profit, orderIdTP, side, timeframe)
+                
+                print("\nOrderID: %(n)s \nOrderIdTP: %(b)s \nMarket Price: %(c)s \nStatus: %(d)s \nTake Profit: %(e)s \nQuantity: %(f)s \nTime Frame: %(g)s" % 
+                    {'n': orderId, 'b': orderIdTP, 'c': market_price, 'd': status, 'e': take_profit, 'f': qty, 'g': timeframe})
+                db.put_orderID(pair, orderId, market_price, qty, status, take_profit, orderIdTP, side, timeframe, order_type)
                 print('-------passed-------')
                 last_hour_date_time = datetime.now() - timedelta(hours = 24)
                 get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
                 # insert_TH(get_startDate)
 
-                print("\nOrder_Position: %(n)s \nOrderIdTP: %(b)s \nMarket Price: %(c)s \nStatus: %(d)s \nTake Profit: %(e)s \nQuantity: %(f)s" % 
-                    {'n': orderId, 'b': orderIdTP, 'c': market_price, 'd': status, 'e': take_profit, 'f': qty})
 
             if order_type == "TEST":
                                
@@ -95,15 +95,17 @@ class call:
     # 'reduceOnly': False, 'closePosition': False, 'side': 'BUY', 'positionSide': 'BOTH', 'stopPrice': '0', 'workingType': 'CONTRACT_PRICE', 
     # 'priceProtect': False, 'origType': 'LIMIT', 'updateTime': 1651089447160}
 
-    def check_order(self, orderId):
+    def check_order(self, orderIdTP, pair):
 
-        try:                    
+        try:
             result = client.futures_get_order(
-                orderId=orderId)        
+                symbol=pair,
+                orderId=orderIdTP)
 
+            status = result['status']
             # Insert to DB
-            print(result['orderId'])
-            quit()
+            # print(result['status'])
+            return status
             
         except BinanceAPIException as e:
             print(e)

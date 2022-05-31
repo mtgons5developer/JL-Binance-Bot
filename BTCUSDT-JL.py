@@ -21,7 +21,7 @@ class PatternDetect:
 #=====================================================================================================================
 
     async def main(self):
-        global pair, timeframe, error_set, deltaSMA, order_type
+        global pair, timeframe, error_set, deltaSMA, order_type, orderId, orderIdTP
         
         result = db.get_toggle()
 
@@ -41,26 +41,21 @@ class PatternDetect:
             # BTCUSDT, ETHUSDT, BNBUSDT, XRPUSDT, SOLUSDT, LUNAUSDT, ADAUSDT, USTUSDT, BUSDUSDT, 
             # DOGEUSDT, AVAXUSDT, DOTUSDT, SHIBUSDT, WBTCUSDT, DAIUSDT, MATICUSDT
 
-            if pair == "BTCUSDT":
+            rr = db.get_order_EntryStatus(pair)          
+
+            yy = 0
+            for y in rr:
+                yy += 1
+
+            xx = 0
+            for x in rr:
+                xx += 1
+                status = x['status']               
+
+            if pair == "BTCUSDT" and status == 2:
 
                 try:                    
                     client = await AsyncClient.create(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
-                    client2 = Client(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
-                    info = client2.get_server_time()
-                    ts = str(info["serverTime"])
-                    t1 = ts[:-3]
-                    t2 = int(t1)
-                    server_time = datetime.fromtimestamp(t2).strftime('%Y-%m-%d %H:%M:%S')
-                    datetime_object = datetime.strptime(server_time, '%Y-%m-%d %H:%M:%S')
-                    nextTF = datetime_object + timedelta(hours=tf)
-
-                    hour1 = nextTF.strftime("%H")
-                    minute1 = int(nextTF.strftime("%M"))
-                    second1 = int(nextTF.strftime("%S"))
-
-                    hour = datetime_object.strftime("%H")
-                    minute = int(datetime_object.strftime("%M"))
-                    second = int(datetime_object.strftime("%S"))
 
                     if timeframe == "3m": 
                         deltaSMA = 10
@@ -97,24 +92,41 @@ class PatternDetect:
                     print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')
 
                     if side != "NONE":
-                        
-                        if side != "SELL":
-                            entry_price = 26000
-                            take_profit = 27000
-                        else:
-                            entry_price = 30000
-                            take_profit = 27000                            
-                        CreateOrder.futures_order(pair, qty, side, order_type, take_profit, timeframe, entry_price)
-                        timer()
+
+                        # if side == "BUY":
+                        #     entry_price = 26000
+                        #     take_profit = 40000
+                        # else:
+                        #     entry_price = 35000
+                        #     take_profit = 27000                 
+
+                        CreateOrder.futures_order(pair, qty, side, order_type, take_profit, timeframe)
+
+                        client2 = Client(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
+                        info = client2.get_server_time()
+                        ts = str(info["serverTime"])
+                        t1 = ts[:-3]
+                        t2 = int(t1)
+                        server_time = datetime.fromtimestamp(t2).strftime('%Y-%m-%d %H:%M:%S')
+                        datetime_object = datetime.strptime(server_time, '%Y-%m-%d %H:%M:%S')
+                        nextTF = datetime_object + timedelta(hours=tf)
+
+                        hour1 = nextTF.strftime("%H")
+                        minute1 = int(nextTF.strftime("%M"))
+                        second1 = int(nextTF.strftime("%S"))
+
+                        hour = datetime_object.strftime("%H")
+                        minute = int(datetime_object.strftime("%M"))
+                        second = int(datetime_object.strftime("%S"))
 
                         if order_type != "TEST":
-
+                            
                             while 1 == 1:
+                                
+                                second += 1
+                                # print(second)
 
-                                secondd += 1
-                                print(minutee, secondd)
-
-                                if second == 55:
+                                if hour == hour1 and minute == 59 and second == 55:
                                     result = db.get_status(pair)
 
                                     yy = 0
@@ -127,34 +139,32 @@ class PatternDetect:
                                         orderIdTP = x['orderIdTP']
                                         orderId = x['orderId']
 
-                                status = CreateOrder.check_order(orderIdTP, pair)
+                                    status = CreateOrder.check_order(orderIdTP, pair)
+                                    # print(status, hour, hour1, minute, second)                                 
 
-                                if status != "NEW":
+                                    if status != "NEW":
 
-                                    print("EXIT FILLED")
-                                    break
+                                        print("EXIT FILLED")
+                                        db.put_order_Exit(pair)
+                                        break
+                                    
+                                    else:
+                                        CreateOrder.cancel_order(orderId, pair)
+                                        CreateOrder.cancel_order(orderIdTP, pair)
+                                        db.put_order_Exit(pair)
+                                        print("EXIT by Time Frame")
+                                        break                                         
 
-                                elif hourr == hour1 and minutee == 59 and secondd == 55:
-
-                                    CreateOrder.cancel_order(orderId, pair)
-                                    print("EXIT by Time Frame")
-
-                                timer()
-                                                                    
-                                if secondd == 60:
-                                    secondd = 0
-                                    minutee += 1
+                                if second == 60:
+                                    second = 0
+                                    minute += 1
                                 
-                                if minutee == 60:
-                                    minutee = 0                                
+                                if minute == 60:
+                                    minute = 0                                
 
                                 time.sleep(1)
                         else:
                             print("EXIT")
-                            # orderIdTP = "55640823848"
-                            # status = CreateOrder.check_order(orderIdTP, pair)
-                            # print(status)
-                            # quit()
                             break
 
                     await client.close_connection()
@@ -236,33 +246,15 @@ class PatternDetect:
         
 #=====================================================================================================================
 
-def entry():
-    print("entry")
-    # pattern_detect = PatternDetect()
-    # asyncio.get_event_loop().run_until_complete(pattern_detect.main())
-    # print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
-def entry():
-    print("exit")
-
-def timer():
-    global hourr, minutee, secondd
-
-    client = Client(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
-    info = client.get_server_time()
-    ts = str(info["serverTime"])
-    t1 = ts[:-3]
-    t2 = int(t1)
-    server_time = datetime.fromtimestamp(t2).strftime('%Y-%m-%d %H:%M:%S')
-    datetime_object = datetime.strptime(server_time, '%Y-%m-%d %H:%M:%S')
-    print(datetime_object)
-    hourr = datetime_object.strftime("%H")
-    minutee = int(datetime_object.strftime("%M"))
-    secondd = int(datetime_object.strftime("%S"))
-    secondd += 2
-
-schedule.every(1).minutes.do(entry)
-schedule.every(1).minutes.do(exit)
+    def exit(self):
+        print("TEST")
+        CreateOrder.cancel_order(orderId, pair)
+        CreateOrder.cancel_order(orderIdTP, pair)
+        print("EXIT by Time Frame")
+        
+        
+# schedule.every(1).minutes.do(entry)
+# schedule.every(1).minutes.do(exit)
 
 
 if __name__ == '__main__':

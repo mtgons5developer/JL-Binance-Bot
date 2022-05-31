@@ -30,7 +30,24 @@ class call:
         cursor = cnx.cursor(dictionary=True)
 
         try:
-            cursor.execute("SELECT timeframe, orderId, orderIdTP, entry_date, pair, order_type  FROM order_entry WHERE pair='" + pair + "' AND " + "status='1'")
+            cursor.execute("SELECT timeframe, orderId, orderIdTP, entry_date, pair, order_type, status  FROM order_entry WHERE pair='" + pair + "' AND " + "status='1'")
+            status = cursor.fetchall()
+            cursor.close()
+            cnx.close()
+
+            return status
+
+        except:
+            cursor.close()
+            cnx.close()
+
+    def get_order_EntryStatus(self, pair):
+        
+        self.get_cnx()
+        cursor = cnx.cursor(dictionary=True)
+
+        try:
+            cursor.execute("SELECT status FROM order_entry WHERE pair='" + pair + "'")
             status = cursor.fetchall()
             cursor.close()
             cnx.close()
@@ -163,7 +180,7 @@ class call:
         cnx.commit()
         cursor.close()
         cnx.close()
-        print("Completed")
+        print("-------Order Entry Success-------\n")
                             
     def put_orderTest(self, pair, qty, entry_price, take_profit, side, order_type, timeframe):
 
@@ -189,6 +206,22 @@ class call:
         query = """INSERT IGNORE INTO order_entry (pair, status, timeframe, win_lose) VALUES (%s, %s, %s, %s)"""
 
         values = (pair, "2", order_type, timeframe, win_lose)
+
+        cursor.execute(query, values)
+            
+        cnx.commit()
+        cursor.close()
+        cnx.close()
+        print("Completed")
+
+    def put_order_Exit(self, pair):
+
+        self.get_cnx()
+        cursor = cnx.cursor()
+
+        query = """INSERT IGNORE INTO order_entry (pair, status) VALUES (%s, %s)"""
+
+        values = (pair, "2")
 
         cursor.execute(query, values)
             

@@ -91,16 +91,9 @@ class PatternDetect:
                     self.Pattern_Detect()
                     print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')
 
-                    if side != "NONE":
+                    if side != "NONE":             
 
-                        # if side == "BUY":
-                        #     entry_price = 26000
-                        #     take_profit = 40000
-                        # else:
-                        #     entry_price = 35000
-                        #     take_profit = 27000                 
-
-                        CreateOrder.futures_order(pair, qty, side, order_type, take_profit, timeframe)
+                        CreateOrder.futures_order(pair, qty, side, order_type, high, timeframe, low)
 
                         client2 = Client(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
                         info = client2.get_server_time()
@@ -112,8 +105,6 @@ class PatternDetect:
                         nextTF = datetime_object + timedelta(hours=tf)
 
                         hour1 = nextTF.strftime("%H")
-                        minute1 = int(nextTF.strftime("%M"))
-                        second1 = int(nextTF.strftime("%S"))
 
                         hour = datetime_object.strftime("%H")
                         minute = int(datetime_object.strftime("%M"))
@@ -124,7 +115,7 @@ class PatternDetect:
                             while 1 == 1:
                                 
                                 second += 1
-                                # print(second)
+                                print(second)
 
                                 if hour == hour1 and minute == 59 and second == 55:
                                     result = db.get_status(pair)
@@ -160,7 +151,11 @@ class PatternDetect:
                                     minute += 1
                                 
                                 if minute == 60:
-                                    minute = 0                                
+                                    minute = 0
+                                    hour += 1
+
+                                if hour == 24:
+                                    hour = 0                               
 
                                 time.sleep(1)
                         else:
@@ -191,7 +186,7 @@ class PatternDetect:
 #=====================================================================================================================
 
     def Pattern_Detect(self):
-        global side, take_profit, entry_price
+        global side, take_profit, entry_price, high, low, close, open
 
         dd = df.tail(4)
         rr = len(df.index)
@@ -207,40 +202,43 @@ class PatternDetect:
         if open > close:
 
             side = "BUY"
-            tp = high - close
-            take_profit = (tp * 0.30) + close
+            # tp = high - close
+            # take_profit = (tp * 0.30) + close
+            # print("test1")
 
             if lc > 0: # Upper wick high but large body
                 
                 if hc < llc:
 
                     side = "SELL"
-                    tp = close - low
-                    take_profit = (tp * 0.30) + close
+                    # tp = close - low
+                    # take_profit = (tp * 0.30) + close
+                    # print("test2")
 
         elif open < close:
 
             side = "SELL"
-            tp = close - low
-            take_profit = close - (tp * 0.30)
-
+            # tp = close - low
+            # take_profit = close - (tp * 0.30)
+            # print("test3")
             if lc > 0: # Upper wick high but low body
                 
                 if hc > llc:
                     side = "BUY"
-                    tp = high - close
-                    take_profit = (tp * 0.30) + close
+                    # tp = high - close
+                    # take_profit = (tp * 0.30) + close
+                    # print("test4")
 
         else:
             side = "NONE"
 
         if order_type == "TEST": entry_price = close
-        take_profit = round(take_profit, 6)
+        # take_profit = round(take_profit, 6)
         print(dd)
         print(close)
         print(low)
         print(side)
-        print(take_profit)
+        # print(take_profit)
         # quit()    
 
         

@@ -43,7 +43,7 @@ class call:
             print("order2")
 
         if passed == 1:
-
+               
             orderId = order["orderId"]
             side = order["side"]
 
@@ -60,19 +60,19 @@ class call:
 
                 side2 = "SELL"
                 tp_buy = (tp_buy * 0.30)
-                print(type(tp_buy))
+                # print(type(tp_buy))
                 take_profit = tp_buy + market_price
                 take_profit = round(take_profit, 6)
-                print("TP:", take_profit)
+                print("TP:", take_profit, pair)
                                     
             elif side == "SELL":
 
                 side2 = "BUY"
                 tp_sell = (tp_sell * 0.30)
-                print(type(tp_sell))
+                # print(type(tp_sell))
                 take_profit = market_price - tp_sell
                 take_profit = round(take_profit, 6)
-                print("TP:", take_profit)
+                print("TP:", take_profit, pair)
 
             order2 = client.futures_create_order(
                 symbol=pair,
@@ -159,6 +159,7 @@ class call:
             print("check order2")
 
     def cancel_order(self, orderID, pair):
+
         try:			
             result = client.futures_cancel_order(
                 symbol=pair,

@@ -24,7 +24,6 @@ class PatternDetect:
         global pair, timeframe, error_set, deltaSMA, order_type, orderId, orderIdTP
         
         result = db.get_toggle()
-
         yy = 0
         for y in result:
             yy += 1
@@ -42,7 +41,7 @@ class PatternDetect:
             # DOGEUSDT, AVAXUSDT, DOTUSDT, SHIBUSDT, WBTCUSDT, DAIUSDT, MATICUSDT
 
             rr = db.get_order_EntryStatus(pair)          
-
+            
             yy = 0
             for y in rr:
                 yy += 1
@@ -80,10 +79,6 @@ class PatternDetect:
                     if timeframe == "1d":
                         deltaSMA = 1000  
 
-                    # print("NextTF:", nextTF, "Hour:", hour1)
-                    # print(hour)
-                    # quit()
-
                     last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
                     get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
                     msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
@@ -103,19 +98,19 @@ class PatternDetect:
                         server_time = datetime.fromtimestamp(t2).strftime('%Y-%m-%d %H:%M:%S')
                         datetime_object = datetime.strptime(server_time, '%Y-%m-%d %H:%M:%S')
                         nextTF = datetime_object + timedelta(hours=tf)
+                        
+                        hour1 = int(nextTF.strftime("%H"))    
 
-                        hour1 = nextTF.strftime("%H")
-
-                        hour = datetime_object.strftime("%H")
+                        hour = int(datetime_object.strftime("%H"))
                         minute = int(datetime_object.strftime("%M"))
                         second = int(datetime_object.strftime("%S"))
-
+                        
                         if order_type != "TEST":
                             
                             while 1 == 1:
                                 
                                 second += 1
-                                print(second)
+                                # print(second)
 
                                 if hour == hour1 and minute == 59 and second == 55:
                                     result = db.get_status(pair)
@@ -140,6 +135,9 @@ class PatternDetect:
                                         break
                                     
                                     else:
+                                        print(orderId)
+                                        print(orderIdTP)
+
                                         CreateOrder.cancel_order(orderId, pair)
                                         CreateOrder.cancel_order(orderIdTP, pair)
                                         db.put_order_Exit(pair)

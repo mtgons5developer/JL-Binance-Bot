@@ -21,7 +21,7 @@ def entry():
  # subprocess.run("python3 ETHUSDT.py & python3 BTCUSDT.py & python3 BNBUSDT.py & " + 
     #     "python3 BCHUSDT.py & python3 XRPUSDT.py & python3 EOSUSDT.py & python3 LTCUSDT.py & python3 TRXUSDT.py", shell=True)
 
-    subprocess.run("python3 BTCUSDT-JL.py", shell=True)
+    subprocess.run("python3 BTCUSDT-JL.py & python3 ETHUSDT.py", shell=True)
     return
 
 #=====================================================================================================================
@@ -45,9 +45,9 @@ def timer():
 timer()
 
 while True:
-
+    #if coin is activated then read order entry at X time.
     second += 1
-    print(minute, second)
+    # print(minute, second)
 
     if second == 60:
         second = 0

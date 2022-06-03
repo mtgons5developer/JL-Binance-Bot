@@ -49,8 +49,8 @@ class PatternDetect:
             xx = 0
             for x in rr:
                 xx += 1
-                status = x['status']               
-
+                status = x['status']
+            
             if pair == "BTCUSDT" and status == 2:
 
                 try:                    
@@ -85,7 +85,7 @@ class PatternDetect:
                     data = self.get_data_frame(symbol=pair, msg=msg)
                     self.Pattern_Detect()
                     print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')
-
+                    
                     if side != "NONE":             
 
                         CreateOrder.futures_order(pair, qty, side, order_type, high, timeframe, low)
@@ -112,7 +112,7 @@ class PatternDetect:
                                 second += 1
                                 # print(second)
 
-                                if hour == hour1 and minute == 59 and second == 55:
+                                if second == 50:
                                     result = db.get_status(pair)
 
                                     yy = 0
@@ -126,20 +126,22 @@ class PatternDetect:
                                         orderId = x['orderId']
 
                                     status = CreateOrder.check_order(orderIdTP, pair)
-                                    # print(status, hour, hour1, minute, second)                                 
+                                    # print(orderIdTP)
+                                    print(status, orderIdTP, hour, minute, second)
 
                                     if status != "NEW":
-
+                                        print(orderIdTP)
                                         print("EXIT FILLED")
                                         db.put_order_Exit(pair)
                                         break
                                     
-                                    else:
+                                    if hour == hour1 and minute == 59:# and second == 55:
+
                                         print(orderId)
                                         print(orderIdTP)
 
-                                        CreateOrder.cancel_order(orderId, pair)
-                                        CreateOrder.cancel_order(orderIdTP, pair)
+                                        CreateOrder.cancel_order(orderId, pair, qty, side)
+                                        CreateOrder.cancel_order2(orderIdTP, pair)
                                         db.put_order_Exit(pair)
                                         print("EXIT by Time Frame")
                                         break                                         
@@ -184,7 +186,7 @@ class PatternDetect:
 #=====================================================================================================================
 
     def Pattern_Detect(self):
-        global side, take_profit, entry_price, high, low, close, open
+        global side, take_profit, entry_price, high, low, close, open       
 
         dd = df.tail(4)
         rr = len(df.index)

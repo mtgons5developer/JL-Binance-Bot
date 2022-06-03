@@ -166,14 +166,14 @@ class call:
         
         cnx.close()
                           
-    def put_orderID(self, pair, orderId, market_price, qty, status, take_profit, orderIdTP, order_type, timeframe, side):
+    def put_orderID(self, pair, orderId, side, qty, market_price, take_profit, orderIdTP, order_type, timeframe):
 
         self.get_cnx()
         cursor = cnx.cursor()
 
-        query = """INSERT IGNORE INTO order_entry (pair, orderId, qty, entryPrice, status, close_pos, orderIdTP, order_type, timeframe, side) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+        query = """INSERT IGNORE INTO order_entry (pair, orderId, side, qty, entryPrice, status, close_pos, orderIdTP, order_type, timeframe) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
-        values = (pair, int(orderId), float(qty), float(market_price), '1', float(take_profit), int(orderIdTP), order_type, timeframe, side)
+        values = (pair, int(orderId), side, float(qty), float(market_price), '1', float(take_profit), int(orderIdTP), order_type, timeframe)
 
         cursor.execute(query, values)
             
@@ -217,17 +217,16 @@ class call:
     def put_order_Exit(self, pair):
 
         self.get_cnx()
-        cursor = cnx.cursor()
+        cursor = cnx.cursor(dictionary=True)
+        cursor.execute("UPDATE order_entry SET status='2' WHERE status='1' AND pair='" + pair + "'")
 
-        query = """INSERT IGNORE INTO order_entry (pair, status) VALUES (%s, %s)"""
-
-        values = (pair, "2")
-
-        cursor.execute(query, values)
-            
-        cnx.commit()
-        cursor.close()
+        try:
+            cnx.commit()
+        except:
+            cnx.rollback()
+        
         cnx.close()
+
         print("Completed")
 
     def get_cnx(self):

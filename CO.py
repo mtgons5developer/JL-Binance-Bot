@@ -43,7 +43,7 @@ class call:
             print("order2")
 
         if passed == 1:
-               
+            
             orderId = order["orderId"]
             side = order["side"]
 
@@ -56,13 +56,23 @@ class call:
             tp_sell = market_price - float(low)
             tp_sell = float(format(tp_sell).replace("-",""))
 
+            # print(orderId)
+            # print(side)
+            # print(market_price)
+            # print(high)
+            # print(low)
+            # print(tp_buy)
+            # print(tp_sell)
+
             if side == "BUY":
 
                 side2 = "SELL"
                 tp_buy = (tp_buy * 0.30)
                 # print(type(tp_buy))
                 take_profit = tp_buy + market_price
-                take_profit = round(take_profit, 6)
+                deci = self.get_quantity_precision(pair)
+                print(deci)
+                take_profit = round(take_profit, deci)
                 print("TP:", take_profit, pair)
                                     
             elif side == "SELL":
@@ -71,36 +81,56 @@ class call:
                 tp_sell = (tp_sell * 0.30)
                 # print(type(tp_sell))
                 take_profit = market_price - tp_sell
-                take_profit = round(take_profit, 6)
+                deci = self.get_quantity_precision(pair)
+                print(deci)
+                take_profit = round(take_profit, deci)
                 print("TP:", take_profit, pair)
 
-            order2 = client.futures_create_order(
-                symbol=pair,
-                side=side2,
-                positionSide='BOTH',
-                type="TAKE_PROFIT_MARKET",
-                    timeInForce='GTC',
-                    stopPrice=take_profit,
-                    quantity=1,
-                    reduceOnly=True,
-                    recvWindow=5000,
-                    workingType= 'MARK_PRICE')
+            try:
+                order2 = client.futures_create_order(
+                    symbol=pair,
+                    side=side2,
+                    positionSide='BOTH',
+                    type="TAKE_PROFIT_MARKET",
+                        timeInForce='GTC',
+                        stopPrice=take_profit,
+                        quantity=1,
+                        reduceOnly=True,
+                        recvWindow=5000,
+                        workingType= 'MARK_PRICE')
+
+            except BinanceAPIException as e:
+                print(e)
+                print("BinanceAPIException")
+
+            except BinanceOrderException as e:
+                print(e)
+                print("BinanceOrderException")
 
             orderIdTP = order2["orderId"]
             status = 1
+            print(orderIdTP)
 
             print("\nOrderID: %(n)s \nOrderIdTP: %(b)s \nMarket Price: %(c)s \nStatus: %(d)s \nTake Profit: %(e)s \nQuantity: %(f)s \nTime Frame: %(g)s" % 
                 {'n': orderId, 'b': orderIdTP, 'c': market_price, 'd': status, 'e': take_profit, 'f': qty, 'g': timeframe})
 
-            db.put_orderID(pair, orderId, market_price, qty, status, take_profit, orderIdTP, side, timeframe, order_type)
+            # print(pair)
+            # print(orderId)
+            # print(side)
+            # print(market_price)
+            # print(take_profit)
+            # print(orderIdTP)
+            # print(timeframe)
+            # print(order_type)
+
+            db.put_orderID(pair, orderId, side, market_price, qty, take_profit, orderIdTP, timeframe, order_type)
             print('-------Order Executed-------')
 
             # last_hour_date_time = datetime.now() - timedelta(hours = 24)
             # get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
             # insert_TH(get_startDate)
 
-
-                # if order_type == "TEST":
+                # if order_type == "TEST":  
                                 
                 #     db.put_orderTest(pair, qty, market_price, take_profit, side, order_type, timeframe)
                 #     # last_hour_date_time = datetime.now() - timedelta(hours = 24)
@@ -118,6 +148,14 @@ class call:
     # 'origQty': '0.002', 'executedQty': '0.002', 'cumQuote': '63.61100', 'timeInForce': 'GTC', 'type': 'MARKET', 'reduceOnly': False, 'closePosition': False, 
     # 'side': 'SELL', 'positionSide': 'BOTH', 'stopPrice': '0', 'workingType': 'CONTRACT_PRICE', 'priceProtect': False, 'origType': 'MARKET', 'time': 1654050887076, 
     # 'updateTime': 1654050887077}
+
+    def get_quantity_precision(self, pair):    
+        info = client.futures_exchange_info() 
+        info = info['symbols']
+        for x in range(len(info)):
+            if info[x]['symbol'] == pair:
+                return info[x]['pricePrecision']
+        return None
 
     def check_order(self, orderIdTP, pair):
 
@@ -158,14 +196,41 @@ class call:
             print(e)
             print("check order2")
 
-    def cancel_order(self, orderID, pair):
+    def cancel_order(self, orderID, pair, qty, side):
+
+        if side == "BUY":
+            side = "SELL"
+        else:
+            side = "BUY"
+
+        try:			
+            result = client.futures_create_order(
+                symbol=pair,
+                side=side,
+                type="MARKET",
+                quantity=qty,
+                recvWindow=5000)
+            print('============================')	
+            print("Binance Futures order cancelled. ", 'OrderId:', orderID)
+            print('============================')	
+
+        except BinanceAPIException as e:
+            print(e)
+            print("cancel1")
+            quit()
+
+        except BinanceOrderException as e:
+            print(e)
+            print("cancel2")
+
+    def cancel_order2(self, orderId, pair):
 
         try:			
             result = client.futures_cancel_order(
                 symbol=pair,
-                orderId=orderID)	
+                orderId=orderId)	
             print('============================')	
-            print("Binance Futures order cancelled. ", 'OrderId:', orderID)
+            print("Binance Futures order cancelled. ", 'OrderId:', orderId)
             print('============================')	
         except BinanceAPIException as e:
             print(e)

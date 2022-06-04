@@ -6,7 +6,6 @@ import config
 
 from binance.enums import *
 from binance.exceptions import BinanceAPIException, BinanceOrderException
-# from callDB import put_orderID
 import callDB
 
 db = callDB.call()
@@ -20,7 +19,7 @@ client = Client(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
 class call:
 # =============================FUTURES=============================
                       
-    def futures_order(self, pair, qty, side, order_type, high, timeframe, low):
+    def futures_order(self, pair, qty, side, high, timeframe, low):
         
         passed = 0
 
@@ -28,19 +27,25 @@ class call:
             order = client.futures_create_order(
                 symbol=pair,
                 side=side,
-                type=order_type,
+                type="MARKET",
                 quantity=qty,
                 recvWindow=5000)
             
             passed = 1
 
         except BinanceAPIException as e:
-            print(e)
+            print(e.status_code)
+            print(e.message)
             print("order1")
+            error = e.status_code
+            return error
 
         except BinanceOrderException as e:
-            print(e)
+            print(e.status_code)
+            print(e.message)
             print("order2")
+            error = e.status_code
+            return error
 
         if passed == 1:
             
@@ -55,7 +60,7 @@ class call:
 
             tp_sell = market_price - float(low)
             tp_sell = float(format(tp_sell).replace("-",""))
-
+            # 1809.92  1813.31  1790.00  1797.35
             # print(orderId)
             # print(side)
             # print(market_price)
@@ -64,25 +69,34 @@ class call:
             # print(tp_buy)
             # print(tp_sell)
 
+            profit = 0.30
+
             if side == "BUY":
 
                 side2 = "SELL"
-                tp_buy = (tp_buy * 0.30)
-                # print(type(tp_buy))
+                tp_buy
+                tp_buy = (tp_buy * profit)
+
+                # if pair == "BTCUSDT": 
+                #     tp_sell = 200
+                # else: tp_sell = 50
+
                 take_profit = tp_buy + market_price
                 deci = self.get_quantity_precision(pair)
-                print(deci)
                 take_profit = round(take_profit, deci)
                 print("TP:", take_profit, pair)
                                     
             elif side == "SELL":
 
                 side2 = "BUY"
-                tp_sell = (tp_sell * 0.30)
-                # print(type(tp_sell))
+                tp_sell = (tp_sell * profit)
+
+                # if pair == "BTCUSDT": 
+                #     tp_sell = 200
+                # else: tp_sell = 50
+
                 take_profit = market_price - tp_sell
                 deci = self.get_quantity_precision(pair)
-                print(deci)
                 take_profit = round(take_profit, deci)
                 print("TP:", take_profit, pair)
 
@@ -100,16 +114,18 @@ class call:
                         workingType= 'MARK_PRICE')
 
             except BinanceAPIException as e:
-                print(e)
+                print(e.status_code)
+                print(e.message)
                 print("BinanceAPIException")
 
             except BinanceOrderException as e:
-                print(e)
+                print(e.status_code)
+                print(e.message)
                 print("BinanceOrderException")
 
             orderIdTP = order2["orderId"]
             status = 1
-            print(orderIdTP)
+            # print(orderIdTP)
 
             print("\nOrderID: %(n)s \nOrderIdTP: %(b)s \nMarket Price: %(c)s \nStatus: %(d)s \nTake Profit: %(e)s \nQuantity: %(f)s \nTime Frame: %(g)s" % 
                 {'n': orderId, 'b': orderIdTP, 'c': market_price, 'd': status, 'e': take_profit, 'f': qty, 'g': timeframe})
@@ -122,32 +138,11 @@ class call:
             # print(orderIdTP)
             # print(timeframe)
             # print(order_type)
+            error = 1
+            return error
 
-            db.put_orderID(pair, orderId, side, market_price, qty, take_profit, orderIdTP, timeframe, order_type)
+            db.put_orderID(pair, orderId, side, market_price, qty, take_profit, orderIdTP, timeframe)
             print('-------Order Executed-------')
-
-            # last_hour_date_time = datetime.now() - timedelta(hours = 24)
-            # get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
-            # insert_TH(get_startDate)
-
-                # if order_type == "TEST":  
-                                
-                #     db.put_orderTest(pair, qty, market_price, take_profit, side, order_type, timeframe)
-                #     # last_hour_date_time = datetime.now() - timedelta(hours = 24)
-                #     # get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
-                #     # insert_TH(get_startDate)
-                #     # print("\nOrder_Position: %(n)s \nOrderIdTP: %(b)s \nMarket Price: %(c)s \nStatus: %(d)s \nTake Profit: %(e)s \nQuantity: %(f)s" % 
-                #     #     {'n': orderId, 'b': orderIdTP, 'c': market_price, 'd': status, 'e': take_profit, 'f': qty})
-
-    # {'orderId': 51740849852, 'symbol': 'BTCUSDT', 'status': 'NEW', 'clientOrderId': 'yBzqOwb4TCJcacDBVXmASM', 'price': '37000.10', 
-    # 'avgPrice': '0.00000', 'origQty': '0.002', 'executedQty': '0', 'cumQty': '0', 'cumQuote': '0', 'timeInForce': 'GTC', 'type': 'LIMIT', 
-    # 'reduceOnly': False, 'closePosition': False, 'side': 'BUY', 'positionSide': 'BOTH', 'stopPrice': '0', 'workingType': 'CONTRACT_PRICE', 
-    # 'priceProtect': False, 'origType': 'LIMIT', 'updateTime': 1651089447160}
-
-    # {'orderId': 56111597252, 'symbol': 'BTCUSDT', 'status': 'FILLED', 'clientOrderId': 'VTRxCD7wQr9ml7TsgG7Lo5', 'price': '0', 'avgPrice': '31805.50000', 
-    # 'origQty': '0.002', 'executedQty': '0.002', 'cumQuote': '63.61100', 'timeInForce': 'GTC', 'type': 'MARKET', 'reduceOnly': False, 'closePosition': False, 
-    # 'side': 'SELL', 'positionSide': 'BOTH', 'stopPrice': '0', 'workingType': 'CONTRACT_PRICE', 'priceProtect': False, 'origType': 'MARKET', 'time': 1654050887076, 
-    # 'updateTime': 1654050887077}
 
     def get_quantity_precision(self, pair):    
         info = client.futures_exchange_info() 
@@ -157,23 +152,25 @@ class call:
                 return info[x]['pricePrecision']
         return None
 
-    def check_order(self, orderIdTP, pair):
+    def check_order(self, pair):
 
         try:
-            result = client.futures_get_order(
-                symbol=pair,
-                orderId=orderIdTP)
+            result = client.futures_get_open_orders(
+                symbol=pair)
+                # orderId=orderIdTP)
 
-            status = result['status']
-
-            return status
+            # status = result['status']
+            print(result)
+            # return status
             
         except BinanceAPIException as e:
-            print(e)
+            print(e.status_code)
+            print(e.message)
             print("No order(s) found.")
 
         except BinanceOrderException as e:
-            print(e)
+            print(e.status_code)
+            print(e.message)
             print("check order2")
 
         # ===========================================================================================
@@ -189,11 +186,13 @@ class call:
             return avgPrice
             
         except BinanceAPIException as e:
-            print(e)
+            print(e.status_code)
+            print(e.message)
             print("No order(s) found.")
 
         except BinanceOrderException as e:
-            print(e)
+            print(e.status_code)
+            print(e.message)
             print("check order2")
 
     def cancel_order(self, orderID, pair, qty, side):
@@ -213,33 +212,44 @@ class call:
             print('============================')	
             print("Binance Futures order cancelled. ", 'OrderId:', orderID)
             print('============================')	
-
+            status = 1
+            return status
         except BinanceAPIException as e:
-            print(e)
-            print("cancel1")
-            quit()
-
+            print(e.status_code)
+            print(e.message)
+            print("cancel1 cancel_order")
+            status = e
+            # status = 2
+            return status
         except BinanceOrderException as e:
-            print(e)
-            print("cancel2")
-
+            print(e.status_code)
+            print(e.message)
+            print("cancel2 cancel_order")
+            status = 3
+            return status
     def cancel_order2(self, orderId, pair):
 
         try:			
             result = client.futures_cancel_order(
                 symbol=pair,
-                orderId=orderId)	
+                orderId=orderId)
             print('============================')	
             print("Binance Futures order cancelled. ", 'OrderId:', orderId)
             print('============================')	
+            status = 1
+            return status
         except BinanceAPIException as e:
-            print(e)
-            print("cancel1")
-            quit()
+            print(e.status_code)
+            print(e.message)
+            print("cancel1 cancel_order2")
+            status = 2
+            return status            
         except BinanceOrderException as e:
-            print(e)
-            print("cancel2")
-
+            print(e.status_code)
+            print(e.message)
+            print("cancel2 cancel_order2")
+            status = 3
+            return status
     def get_tick_size(self, symbol: str) -> float:
         info = client.futures_exchange_info()
 
@@ -253,26 +263,3 @@ class call:
     def get_rounded_price(self, symbol: str, price: float) -> float:
         return round_step_size(price, self.get_tick_size(symbol))
 
-    #     "clientOrderId": "testOrder",
-    #     "cumQty": "0",
-    #     "cumQuote": "0",
-    #     "executedQty": "0",
-    #     "orderId": 22542179,
-    #     "avgPrice": "0.00000",
-    #     "origQty": "10",
-    #     "price": "0",
-    #     "reduceOnly": false,
-    #     "side": "BUY",
-    #     "positionSide": "SHORT",
-    #     "status": "NEW",
-    #     "stopPrice": "9300",        // please ignore when order type is TRAILING_STOP_MARKET
-    #     "closePosition": false,   // if Close-All
-    #     "symbol": "BTCUSDT",
-    #     "timeInForce": "GTC",
-    #     "type": "TRAILING_STOP_MARKET",
-    #     "origType": "TRAILING_STOP_MARKET",
-    #     "activatePrice": "9020",    // activation price, only return with TRAILING_STOP_MARKET order
-    #     "priceRate": "0.3",         // callback rate, only return with TRAILING_STOP_MARKET order
-    #     "updateTime": 1566818724722,
-    #     "workingType": "CONTRACT_PRICE",
-    #     "priceProtect": false            // if conditional order trigger is protected   

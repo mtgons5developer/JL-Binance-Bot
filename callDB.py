@@ -166,14 +166,14 @@ class call:
         
         cnx.close()
                           
-    def put_orderID(self, pair, orderId, side, qty, market_price, take_profit, orderIdTP, order_type, timeframe):
+    def put_orderID(self, pair, orderId, side, qty, market_price, take_profit, orderIdTP, timeframe):
 
         self.get_cnx()
         cursor = cnx.cursor()
 
-        query = """INSERT IGNORE INTO order_entry (pair, orderId, side, qty, entryPrice, status, close_pos, orderIdTP, order_type, timeframe) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+        query = """INSERT IGNORE INTO order_entry (pair, orderId, side, qty, entryPrice, status, close_pos, orderIdTP, timeframe) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
-        values = (pair, int(orderId), side, float(qty), float(market_price), '1', float(take_profit), int(orderIdTP), order_type, timeframe)
+        values = (pair, int(orderId), side, float(qty), float(market_price), '1', float(take_profit), int(orderIdTP), timeframe)
 
         cursor.execute(query, values)
             
@@ -196,7 +196,7 @@ class call:
         cnx.commit()
         cursor.close()
         cnx.close()
-        print("Completed")
+        print("Completed put_orderTest")
 
     def put_orderTest_Exit(self, pair, order_type, timeframe, win_lose):
 
@@ -212,7 +212,7 @@ class call:
         cnx.commit()
         cursor.close()
         cnx.close()
-        print("Completed")
+        print("Completed put_orderTest_Exit")
 
     def put_order_Exit(self, pair):
 
@@ -227,7 +227,7 @@ class call:
         
         cnx.close()
 
-        print("Completed")
+        print("Completed put_order_Exit")
 
     def get_cnx(self):
         global cnx

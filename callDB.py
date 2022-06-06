@@ -180,7 +180,7 @@ class call:
         cnx.commit()
         cursor.close()
         cnx.close()
-        print("-------Order Entry Success-------\n")
+        print("-------Order Entry Success-------\n", pair)
                             
     def put_orderTest(self, pair, qty, entry_price, take_profit, side, order_type, timeframe):
 
@@ -222,12 +222,16 @@ class call:
 
         try:
             cnx.commit()
+            print("Completed put_order_Exit")
+            status = 1
+            return status
         except:
+            print("put_order_Exit ERROR")
             cnx.rollback()
+            status = 1
+            return status            
         
         cnx.close()
-
-        print("Completed put_order_Exit")
 
     def get_cnx(self):
         global cnx

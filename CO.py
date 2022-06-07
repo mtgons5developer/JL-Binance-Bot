@@ -1,16 +1,11 @@
-from datetime import datetime, timedelta
-from glob import glob
-
+import time
 from binance.client import Client
 import config
-
 from binance.enums import *
 from binance.exceptions import BinanceAPIException, BinanceOrderException
 import callDB
 
 db = callDB.call()
-from TH import insert_TH
-
 from binance.helpers import round_step_size
 
 client = Client(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
@@ -18,6 +13,7 @@ client = Client(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
     
 class call:
 # =============================FUTURES=============================
+
     def futures_orderTP(self, pair, side, take_profit):
 
             try:
@@ -30,7 +26,7 @@ class call:
                         stopPrice=take_profit,
                         quantity=1,
                         reduceOnly=True,
-                        recvWindow=5000,
+                        recvWindow=15000,
                         workingType= 'MARK_PRICE')
 
                 orderIdTP = order["orderId"]
@@ -56,7 +52,7 @@ class call:
                 side=side,
                 type="MARKET",
                 quantity=qty,
-                recvWindow=5000)
+                recvWindow=15000)
             
             passed = 1
 
@@ -111,13 +107,27 @@ class call:
                 take_profit = round(take_profit, deci)
                 print("TP:", take_profit, pair)
 
-            orderIdTP = self.futures_orderTP(pair, side2, take_profit)
+            # orderIdTP = self.futures_orderTP(pair, side2, take_profit)
+            order = client.futures_create_order(
+                symbol=pair,
+                side=side2,
+                positionSide='BOTH',
+                type="TAKE_PROFIT_MARKET",
+                    timeInForce='GTC',
+                    stopPrice=take_profit,
+                    quantity=1,
+                    reduceOnly=True,
+                    recvWindow=15000,
+                    workingType= 'MARK_PRICE')
+
+            orderIdTP = order["orderId"]
+
 
             print("\nOrderID: %(n)s \nOrderIdTP: %(b)s \nMarket Price: %(c)s \nTake Profit: %(e)s \nQuantity: %(f)s \nTime Frame: %(g)s" % 
                 {'n': orderId, 'b': orderIdTP, 'c': market_price, 'e': take_profit, 'f': qty, 'g': timeframe})
 
             db.put_orderID(pair, orderId, side, market_price, qty, take_profit, orderIdTP, timeframe)
-            print('-------Order Executed-------')
+            print('-------Order Executed-------', pair)
 
             error = 1
             return error
@@ -144,34 +154,14 @@ class call:
         except BinanceAPIException as e:
             print(e.status_code)
             print(e.message)
-            print("No order(s) found.")
+            print("No order(s) found.", pair)
 
         except BinanceOrderException as e:
             print(e.status_code)
             print(e.message)
-            print("check order2")
+            print("check order2", pair)
 
         # ===========================================================================================
-
-    def check_avgPrice(self, orderIdTP, pair):
-
-        try:
-            result = client.futures_get_order(
-                symbol=pair,
-                orderId=orderIdTP)
-
-            avgPrice = result['avgPrice']
-            return avgPrice
-            
-        except BinanceAPIException as e:
-            print(e.status_code)
-            print(e.message)
-            print("No order(s) found.")
-
-        except BinanceOrderException as e:
-            print(e.status_code)
-            print(e.message)
-            print("check order2")
 
     def cancel_order(self, orderID, pair, qty, side):
 

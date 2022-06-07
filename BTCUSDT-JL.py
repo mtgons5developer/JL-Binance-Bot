@@ -38,17 +38,14 @@ class PatternDetect:
             order_type = x['order_type']
             tf = int(timeframe[:-1])
 
-            # BTCUSDT, ETHUSDT, BNBUSDT, XRPUSDT, SOLUSDT, LUNAUSDT, ADAUSDT, USTUSDT, BUSDUSDT, 
+            # BTCUSDT, ETHUSDT, BNBUSDT, XRPUSDT, SOLUSDT, ADAUSDT, USTUSDT, BUSDUSDT, 
             # DOGEUSDT, AVAXUSDT, DOTUSDT, SHIBUSDT, WBTCUSDT, DAIUSDT, MATICUSDT
 
-            rr = db.get_order_EntryStatus(pair)    
-            
+            rr = db.get_order_EntryStatus(pair)
             if rr != "2" or rr != "1": status = 2
-            
             yy = 0
             for y in rr:
                 yy += 1
-
             xx = 0
             for x in rr:
                 xx += 1
@@ -88,13 +85,12 @@ class PatternDetect:
                     data = self.get_data_frame(symbol=pair, msg=msg)
                     self.Pattern_Detect()
                     print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')
-
+                    
                     if side != "NONE":             
 
-                        status = CreateOrder.futures_order(pair, qty, side, high, timeframe, low)
-                        while status != 1:
-                            status = CreateOrder.cancel_order2(orderIdTP, pair)
-                            time.sleep(1)
+                        CreateOrder.futures_order(pair, qty, side, high, timeframe, low)
+                        # db.put_orderID(pair, "1234", side, '1234', qty, '1234', '1234', timeframe)
+                        # print('-------Order Executed-------')
 
                         client2 = Client(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
                         info = client2.futures_time()
@@ -102,7 +98,7 @@ class PatternDetect:
                         t1 = ts[:-3]
                         t2 = int(t1)
                         server_time = datetime.fromtimestamp(t2).strftime('%Y-%m-%d %H:%M:%S')
-                        th = datetime.fromtimestamp(t2).strftime('%Y-%m-%d')
+                        th = datetime.strftime(datetime.now() - timedelta(1), '%Y-%m-%d')
                         datetime_object = datetime.strptime(server_time, '%Y-%m-%d %H:%M:%S')
                         nextTF = datetime_object + timedelta(hours=tf)
                         
@@ -111,81 +107,78 @@ class PatternDetect:
                         hour = int(datetime_object.strftime("%H"))
                         minute = int(datetime_object.strftime("%M"))
                         second = int(datetime_object.strftime("%S"))
-
-                        if order_type != "TEST":
                             
-                            while 1 == 1:
-                                
-                                second += 1
-                                # print(second)
+                        while 1 == 1:
+                            second += 1
+                            if second == 55:
 
-                                if second == 50:
+                                print(minute, second, pair)
+
+                                order = db.get_order_EntryStatus("BTCUSDT")
+
+                                for x in order: 
+                                    if x['status'] == 1:
+                                        break
+
+                                status = x['status']
+                                print(x['status'])
+                                print("Order Status:", status, "BTCUSDT") #Check Order Entry Status of a Pair
+
+                                if status == 1:
                                     result = db.get_status(pair)
-
                                     yy = 0
                                     for y in result:
                                         yy += 1
-
                                     xx = 0
                                     for x in result:
                                         xx += 1
                                         orderIdTP = x['orderIdTP']
                                         orderId = x['orderId']
-
-                                    status = CreateOrder.check_order(orderIdTP, pair)
-                                    # print(orderIdTP)
-                                    # print(status, orderIdTP, hour, minute, second, pair)
-
-                                    if status != "NEW":
-                                        print("EXIT FILLED", orderIdTP, pair)
-                                        db.put_order_Exit(pair)
-                                        break
                                     
-                                    elif minute == 4 or minute == 9 or minute == 14 or minute == 19 or minute == 24 or minute == 29 or minute == 34 or minute == 39 or minute == 44 or minute == 49:
-                                    # if hour == hour1 and minute == 59:
+                                    status = CreateOrder.check_order(orderIdTP, pair) #Check OrderID Status of a Pair
+                                    print(status, orderIdTP, pair)
+                                    
+                                    if status == "FILLED":
 
-                                        print("EXIT by Time Frame", orderId, pair)                                           
-
-                                        status = CreateOrder.cancel_order(orderId, pair, qty, side)
-
-                                        while status != 1:
-                                            
-                                            status = CreateOrder.cancel_order(orderId, pair, qty, side)
-                                            time.sleep(1)         
-                                        
-                                        print("EXIT by Time Frame", orderIdTP, pair)                               
-
-                                        status = CreateOrder.cancel_order2(orderIdTP, pair)
-                                        while status != 1:
-                                            status = CreateOrder.cancel_order2(orderIdTP, pair)
-                                            time.sleep(1)
-
-                                        print("EXIT by Time Frame", orderIdTP, pair)
                                         db.put_order_Exit(pair)
-                                        # insert_TH(th)                                                                             
-                                        break                                         
+                                        insert_TH(th) 
+                                        print("Order FILLED", orderIdTP, pair)
+                                        quit()
 
-                                if second == 60:
-                                    second = 0
-                                    minute += 1
-                                
-                                if minute == 60:
-                                    minute = 0
-                                    hour += 1
+                                    # elif minute == 4 or minute == 9 or minute == 14 or minute == 19 or minute == 24 or minute == 29 or minute == 34 or minute == 39 or minute == 44 or minute == 49 or minute == 54 or minute == 59:
+                                    if status != "FILLED":
+                                        if minute == 30 or minute == 0:
+                                            
+                                            CreateOrder.cancel_order(orderId, pair, qty, side)
+                                            CreateOrder.cancel_order2(orderIdTP, pair)
+                                            db.put_order_Exit(pair)
+                                            insert_TH(th) 
+                                            print("EXIT by Time Frame.")
+                                            quit()
+                                else: 
+                                    continue                             
 
-                                if hour == 24:
-                                    hour = 0                               
+                            if second >= 60:
+                                second = 0
+                                minute += 1
+                            
+                            if minute >= 60:
+                                minute = 0
+                                hour += 1   
+                                if hour >= 24:
+                                    hour = 0
 
-                                time.sleep(1)
-                        else:
-                            print("EXIT")
-                            break
+                            time.sleep(1)
 
                     await client.close_connection()
 
-                except: await client.close_connection()
+                except: 
+                    await client.close_connection()
 
-                  
+            else:
+                continue
+
+                           
 #=====================================================================================================================
                 
     def get_data_frame(self, symbol, msg):
@@ -239,67 +232,23 @@ class PatternDetect:
 
         else:
             side = "NONE"  
- 
+
 #=====================================================================================================================
 
-    def exit(self):
-        print("TEST")
-        CreateOrder.cancel_order(orderId, pair)
-        CreateOrder.cancel_order(orderIdTP, pair)
-        print("EXIT by Time Frame")
-        
-        
-# schedule.every(1).minutes.do(entry)
-# schedule.every(1).minutes.do(exit)
-
-client = Client(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
-
-# {'symbol': 'BTCUSDT', 'initialMargin': '4.95575009', 'maintMargin': '0.11893800', 'unrealizedProfit': '-0.06450000', 'positionInitialMargin': '4.95575009', 
-# 'openOrderInitialMargin': '0', 'leverage': '6', 'isolated': True, 'entryPrice': '29670.0', 'maxNotional': '20000000', 'positionSide': 'BOTH', 
-# 'positionAmt': '-0.001', 'notional': '-29.73450000', 'isolatedWallet': '4.93323209', 'updateTime': 1654335480477, 'bidNotional': '0', 'askNotional': '0'},
-
-# {'feeTier': 0, 'canTrade': True, 'canDeposit': True, 'canWithdraw': True, 'updateTime': 0, 'totalInitialMargin': '4.95550579', 'totalMaintMargin': '0.11893213',
-#  'totalWalletBalance': '25.45013785', 'totalUnrealizedProfit': '-0.06303420', 'totalMarginBalance': '25.38710365', 'totalPositionInitialMargin': '4.95550579', 
-#  'totalOpenOrderInitialMargin': '0.00000000', 'totalCrossWalletBalance': '20.51690576', 'totalCrossUnPnl': '0.00000000', 'availableBalance': '20.51690576',
-#   'maxWithdrawAmount': '20.51690576', 'assets': [{'asset': 'DOT', 'walletBalance': '0.00000000', 'unrealizedProfit': '0.00000000', 'marginBalance': '0.00000000',
-#    'maintMargin': '0.00000000', 'initialMargin': '0.00000000', 'positionInitialMargin': '0.00000000', 'openOrderInitialMargin': '0.00000000', 
-#    'maxWithdrawAmount': '0.00000000', 'crossWalletBalance': '0.00000000', 'crossUnPnl': '0.00000000', 'availableBalance': '0.00000000', 'marginAvailable': True, 
-#    'updateTime': 0}, {'asset': 'BTC', 'walletBalance': '0.00000000', 'unrealizedProfit': '0.00000000', 'marginBalance': '0.00000000', 
-#    'maintMargin': '0.00000000', 'initialMargin': '0.00000000', 'positionInitialMargin': '0.00000000', 'openOrderInitialMargin': '0.00000000', 
-#    'maxWithdrawAmount': '0.00000000', 'crossWalletBalance': '0.00000000', 'crossUnPnl': '0.00000000', 'availableBalance': '0.00000000', 
-#    'marginAvailable': True, 'updateTime': 1653802590669}, {'asset': 'SOL', 'walletBalance': '0.00000000', 'unrealizedProfit': '0.00000000', 
-#    'marginBalance': '0.00000000', 'maintMargin': '0.00000000', 'initialMargin': '0.00000000', 'positionInitialMargin': '0.00000000',
-#     'openOrderInitialMargin': '0.00000000', 'maxWithdrawAmount': '0.00000000', 'crossWalletBalance': '0.00000000', 'crossUnPnl': '0.00000000',
-#      'availableBalance': '0
-
-# while 1==1:
-#     orders = client.futures_account()['positions']
-#     for x in orders:
-#         pnl = float(x['unrealizedProfit'])
-#         symbol = x['symbol']
-#         margin = float(x['initialMargin'])
-
-#         if pnl != 0 and symbol == 'ETHUSDT': 
-#             print("PNL:", round(pnl, 2), symbol, round(margin, 1), "USDT")
-#         if pnl != 0 and symbol == 'BTCUSDT': 
-#             print("PNL:", round(pnl, 2), symbol, round(margin, 1), "USDT")
-
-#     time.sleep(1)
-
-# print(client.futures_position_information())
-
+# client = Client(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
 # orders = client.futures_position_information(symbol="ETHUSDT")
 # print(orders)
+# insert_TH("2022-06-05")
+# status = CreateOrder.check_order("56667156337", "BTCUSDT")
+# print(status)
+# print(datetime.strftime(datetime.now() - timedelta(1), '%Y-%m-%d'))
+
 # quit()
 
 if __name__ == '__main__':
-    # schedule.run_pending()
-    # time.sleep(1)
-    # print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
     pattern_detect = PatternDetect()
     asyncio.get_event_loop().run_until_complete(pattern_detect.main())
-    # print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
 
 
 

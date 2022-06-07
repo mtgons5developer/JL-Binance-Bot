@@ -246,6 +246,6 @@ class call:
             elif err.errno == errorcode.ER_BAD_DB_ERROR:
                 print("Database does not exist")
             else:
-                print(err)
+                print(err, "get_cnx")
 
         return cnx    

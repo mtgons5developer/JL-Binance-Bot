@@ -30,7 +30,7 @@ class call:
         cursor = cnx.cursor(dictionary=True)
 
         try:
-            cursor.execute("SELECT timeframe, orderId, orderIdTP, entry_date, pair, order_type, status  FROM order_entry WHERE pair='" + pair + "' AND " + "status='1'")
+            cursor.execute("SELECT orderId, orderIdTP FROM order_entry WHERE pair='" + pair + "' AND " + "status='1'")
             status = cursor.fetchall()
             cursor.close()
             cnx.close()

@@ -1,140 +1,175 @@
-from datetime import datetime, timedelta
 
+from datetime import datetime, timedelta
+import schedule
 import time
-import talib
+
 import asyncio
 import pandas as pd
-import numpy as np
 
 from binance.client import AsyncClient
 from binance.client import Client
 
-
-from callDB import get_startDate, put_dateError, get_toggle, get_TH_uuid, get_TH_pair, get_TH_orderID
-from CO import futures_order, get_rounded_price, get_tick_size, cancel_order, check_order
-
+from TH import insert_TH
 import config
+import callDB
+import CO
+
+db = callDB.call()
+CreateOrder = CO.call()
 
 class PatternDetect:
-    
+
+#=====================================================================================================================
+
+    async def main(self):
+        global pair, timeframe, error_set, deltaSMA, order_type, orderId, orderIdTP, qty, tf
+        # client = await AsyncClient.create(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
+        
+        result = db.get_toggle()
+        found = 0
+        xx = 0
+        for x in result:
+            xx += 1
+            pair = x['pair']
+            timeframe = x['timeframe']
+            qty = x['qty']
+            order_type = x['order_type']
+            tf = int(timeframe[:-1])
+            tf = tf * 60
+            tf = tf - 1
+
+            # BTCUSDT, ETHUSDT, BNBUSDT, XRPUSDT, SOLUSDT, ADAUSDT, LTCUSDT
+            # DOGEUSDT, AVAXUSDT, DOTUSDT, SHIBUSDT, MATICUSDT, BCHUSDT, EOSUSDT
+
+            rr = db.get_order_EntryStatus(pair)
+            if rr != "2" or rr != "1": status = 2
+
+            for x in rr:
+                xx += 1
+                status = x['status']
+            
+            if pair == "EOSUSDT" and status == 2:
+                found = 1
+                break
+
+        if found == 1:
+
+            if timeframe == "3m": 
+                deltaSMA = 10
+            if timeframe == "5m":
+                deltaSMA = 12
+            if timeframe == "15m":
+                deltaSMA = 16
+            if timeframe == "30m":
+                deltaSMA = 24
+            if timeframe == "1h":
+                deltaSMA = 40
+            if timeframe == "2h":
+                deltaSMA = 80
+            if timeframe == "4h":
+                deltaSMA = 140
+            if timeframe == "6h":
+                deltaSMA = 200
+            if timeframe == "8h":
+                deltaSMA = 300
+            if timeframe == "12h":
+                deltaSMA = 500
+            if timeframe == "1d":
+                deltaSMA = 1000  
+
+            client = await AsyncClient.create(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
+            last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
+            get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+            msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
+            data = self.get_data_frame(symbol=pair, msg=msg)
+            self.Pattern_Detect()
+            print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')
+            await client.close_connection()
+            CreateOrder.futures_order(pair, qty, side, high, timeframe, low)
+
+#=====================================================================================================================
+
     def get_data_frame(self, symbol, msg):
-        global rows_count, df, volume, high, close
+        global rows_count, df, high, close
 
         df = pd.DataFrame(msg)
         df.columns = ['Time','Open', 'High', 'Low', 'Close', 'Volume','CloseTime', 'qav','num_trades','taker_base_vol', 'taker_quote_vol', 'ignore']
-        df = df.loc[:, ['Time','Open', 'High', 'Low', 'Close', 'Volume']]
+        df = df.loc[:, ['Time','Open', 'High', 'Low', 'Close']]
         df["Time"] = pd.to_datetime(df["Time"], unit='ms')
         df["Open"] = df["Open"].astype(float)
         df["High"] = df["High"].astype(float)
         df["Low"] = df["Low"].astype(float)
         df["Close"] = df["Close"].astype(float)
-        df["Volume"] = df["Volume"].astype(float)
-
-        rows_count = len(df.index)
-        vv = df["Volume"]
-        volume = round(vv[rows_count - 1])
-        cc = df["Close"]
-        close = cc[rows_count - 1]
-        hh = df["High"]
-        high = hh[rows_count - 1]   
 
         return df
 
 #=====================================================================================================================
 
-    def d_RSI(self):
-        global rsi, error_set
+    def Pattern_Detect(self):
+        global side, take_profit, entry_price, high, low, close, open       
 
-        rsi = talib.RSI(df["Close"])
-        rw = len(df.index)
-        tt = str(rsi[rw - 1])
-        rsi = round(float(tt))
-    
-        if tt == "nan":
-            print("\n ERROR deltatime adjust to a higher value\n")
-            put_dateError(timeframe, pair)
-            error_set = 1
+        dd = df.tail(4)
+        rr = len(df.index)
 
-#=====================================================================================================================
-
-    def d_SMA(self):
-        global curPrice, sma, error_set
-
-        sma = talib.SMA(df['Close'])
-        rw = len(df.index)
-        tt = str(sma[rw - 1])
-        sma = round(float(tt), 6)
-        curPrice = df['Close'].iloc[-1]
+        open = df["Open"][rr - 2] 
+        high = df["High"][rr - 2] 
+        low = df["Low"][rr - 2] 
+        close = df['Close'][rr - 2] 
+        hc = high - close
+        lc = close - low
+        llc = lc * 4
         
-        if tt == "nan":
-            print("\nERROR deltatime adjust to a higher value\n")
-            put_dateError(timeframe, pair)
-            error_set = 1
+        if open > close:
+            side = "BUY"
+            if lc > 0: # Upper wick high but large body                
+                if hc < llc:
+                    side = "SELL"
+        elif open < close:
+            side = "SELL"
+            if lc > 0: # Upper wick high but low body                
+                if hc > llc:
+                    side = "BUY"
+        else:
+            side = "NONE"  
 
-#=====================================================================================================================
-
-    async def main(self):
-        global pair, timeframe, error_set
         
-        error_set = 0
-        result = get_toggle()
+def exit():
 
-        yy = 0
-        for y in result:
-            yy += 1   
+    result = db.get_status(pair)
+    xx = 0
+    for x in result:
+        xx += 1
+        orderIdTP = x['orderIdTP']
+        orderId = x['orderId']
 
-        xx = 0
-        for x in result:
-            xx += 1   
-            pair = x['pair']
-            timeframe = x['timeframe']
-            qty = x['qty']
-            deltatime = x['deltatime']
-            volume_set = x['volume']
-            
-            if pair == "EOSUSDT":
+    status = CreateOrder.check_order(orderIdTP, pair)             
 
-                try:
+    if status == "FILLED" or status == "CANCELED":
 
-                    client = await AsyncClient.create(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
-                    print(f'Retrieving Historical data from Binance for: {pair, timeframe}')
-                    last_hour_date_time = datetime.now() - timedelta(hours = deltatime) #Change Settings Web
-                    get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
-                    msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
-                    data = self.get_data_frame(symbol=pair, msg=msg) 
+        db.put_order_Exit(pair)
+        insert_TH(th) 
+        print("Order FILLED", orderIdTP, pair)
+        quit()
 
-                    if volume > volume_set and error_set == 0:
+    if status == "NEW":
+        CreateOrder.cancel_order(orderId, pair, qty, side)
+        CreateOrder.cancel_order2(orderIdTP, pair)
+        db.put_order_Exit(pair)
+        insert_TH(th) 
+        print("EXIT by Time Frame.")
+        quit()
 
-                        self.d_RSI()
-                        self.d_SMA()   
-
-                        type = "LIMIT"
-                        # type = "MARKET"
-
-                        #Not important on final code
-                        if pair == "EOSUSDT":
-                            entry_price = 1.05 
-                            entry_price = get_rounded_price(pair, entry_price)
-
-                        side = "BUY"
-                        # if curPrice > close and sma > curPrice and rsi > 0 and rsi < 0:
-                        #     side = "BUY"
-                        # else:
-                        #     side = "SELL"
-                        
-                        print("%(h)s \nVolume: %(c)s \nHigh: %(a)s Close: %(b)s Current Price: %(d)s \nRSI: %(e)s SMA: %(f)s \nQTY: %(g)s \nSIDE: %(i)s \n" % 
-                            {'a': close, 'b': high, 'c': volume, 'd': curPrice, 'e': rsi, 'f': sma, 'g': qty, 'h': get_startDate, 'i':side})
-                        # futures_order(pair, qty, entry_price, side, type, close, high)
-                        
-                    await client.clos_econnection()
-
-                except: await client.close_connection()
-
-            
 #=====================================================================================================================
 
-if __name__ == '__main__':
+pattern_detect = PatternDetect()
+asyncio.get_event_loop().run_until_complete(pattern_detect.main())
 
-    pattern_detect = PatternDetect()
-    asyncio.get_event_loop().run_until_complete(pattern_detect.main())
- 
+schedule.every(tf).minutes.do(exit)
+
+while True:
+    schedule.run_pending()
+    time.sleep(1)
+
+
+
+

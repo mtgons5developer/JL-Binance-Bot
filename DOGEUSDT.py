@@ -38,8 +38,8 @@ class PatternDetect:
             tf = tf * 60
             tf = tf - 1
 
-            # BTCUSDT, ETHUSDT, BNBUSDT, XRPUSDT, SOLUSDT, ADAUSDT, LTCUSDT, TRXUSDT
-            # DOGEUSDT, AVAXUSDT, DOTUSDT, SHIBUSDT, MATICUSDT, BCHUSDT, EOSUSDT
+            # BTCUSDT, ETHUSDT, BNBUSDT, XRPUSDT, SOLUSDT, ADAUSDT, LTCUSDT
+            # DOGEUSDT, AVAXUSDT, DOTUSDT, SHIBUSDT, MATICUSDT, BCHUSDT
 
             rr = db.get_order_EntryStatus(pair)
             if rr != "2" or rr != "1": status = 2
@@ -48,7 +48,7 @@ class PatternDetect:
                 xx += 1
                 status = x['status']
             
-            if pair == "TRXUSDT" and status == 2:
+            if pair == "DOGEUSDT" and status == 2:
                 found = 1
                 break
 

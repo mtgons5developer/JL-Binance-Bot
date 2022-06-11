@@ -71,40 +71,57 @@ class call:
 
     def get_TH_orderID(self, uuid):
 
-        self.get_cnx()
-        cursor = cnx.cursor()
-        sql = "SELECT orderId FROM tradeHistory WHERE uuid='" + uuid + "';"
-        cursor.execute(sql)
-        orderId = cursor.fetchone()[0]
-        cnx.close()
+        try:
 
-        return orderId
+            self.get_cnx()
+            cursor = cnx.cursor()
+            sql = "SELECT orderId FROM tradeHistory WHERE uuid='" + uuid + "';"
+            cursor.execute(sql)
+            orderId = cursor.fetchone()[0]
+            cnx.close()
+
+            return orderId
+
+        except:
+            cursor.close()
+            cnx.close()
 
     def get_TH_uuid(self):
         global th_orderID
+        try:
 
-        self.get_cnx()
-        cursor = cnx.cursor()
-        sql = "SELECT MAX(uuid) FROM tradeHistory;"
-        cursor.execute(sql)
-        th_orderID = cursor.fetchone()[0]    
-        cnx.close()
+            self.get_cnx()
+            cursor = cnx.cursor()
+            sql = "SELECT MAX(uuid) FROM tradeHistory;"
+            cursor.execute(sql)
+            th_orderID = cursor.fetchone()[0]    
+            cnx.close()
 
-        return str(th_orderID)
+            return str(th_orderID)
+
+        except:
+            cursor.close()
+            cnx.close()
 
     def get_qty(self, timeframe, pair):
         
-        self.get_cnx()
-        cursor = cnx.cursor(dictionary=True)
+        try:
+            self.get_cnx()
+            cursor = cnx.cursor(dictionary=True)
 
-        cursor.execute("SELECT qty FROM settings WHERE pair='" + pair + "' AND timeframe='" + timeframe + "' AND toggle='1'")
+            cursor.execute("SELECT qty FROM settings WHERE pair='" + pair + "' AND timeframe='" + timeframe + "' AND toggle='1'")
 
-        dd = cursor.fetchone()
-        qty = dd["qty"]
+            dd = cursor.fetchone()
+            qty = dd["qty"]
 
-        cnx.close()
-        # print("Quantity:", qty)
-        return qty
+            cnx.close()
+            # print("Quantity:", qty)
+            return qty
+
+        except:
+            cursor.close()
+            cnx.close()
+
 
     # def get_startDate(self, timeframe):
         

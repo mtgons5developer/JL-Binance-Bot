@@ -147,7 +147,6 @@ def exit():
     if status == "FILLED" or status == "CANCELED":
 
         db.put_order_Exit(pair)
-        insert_TH(th) 
         print("Order FILLED", orderIdTP, pair)
         quit()
 
@@ -155,7 +154,6 @@ def exit():
         CreateOrder.cancel_order(orderId, pair, qty, side)
         CreateOrder.cancel_order2(orderIdTP, pair)
         db.put_order_Exit(pair)
-        insert_TH(th) 
         print("EXIT by Time Frame.")
         quit()
 

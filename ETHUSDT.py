@@ -37,9 +37,9 @@ class PatternDetect:
             tf = int(timeframe[:-1])
             tf = tf * 60
             tf = tf - 1
-            
-            # BTCUSDT, ETHUSDT, BNBUSDT, XRPUSDT, SOLUSDT, ADAUSDT, LTCUSDT
-            # DOGEUSDT, AVAXUSDT, DOTUSDT, SHIBUSDT, MATICUSDT, BCHUSDT, EOSUSDT
+
+            # BTCUSDT, ETHUSDT, BNBUSDT, XRPUSDT, SOLUSDT, ADAUSDT, LTCUSDT, TRXUSDT
+            # DOGEUSDT, AVAXUSDT, DOTUSDT, MATICUSDT, BCHUSDT, EOSUSDT
 
             rr = db.get_order_EntryStatus(pair)
             if rr != "2" or rr != "1": status = 2
@@ -53,7 +53,7 @@ class PatternDetect:
                 break
 
         if found == 1:
-
+            
             if timeframe == "3m": 
                 deltaSMA = 10
             if timeframe == "5m":
@@ -85,7 +85,7 @@ class PatternDetect:
             self.Pattern_Detect()
             print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')
             await client.close_connection()
-            CreateOrder.futures_order(pair, qty, side, high, timeframe, low)
+            if volume >= 60000: CreateOrder.futures_order(pair, qty, side, high, timeframe, low)
 
 #=====================================================================================================================
 
@@ -94,19 +94,20 @@ class PatternDetect:
 
         df = pd.DataFrame(msg)
         df.columns = ['Time','Open', 'High', 'Low', 'Close', 'Volume','CloseTime', 'qav','num_trades','taker_base_vol', 'taker_quote_vol', 'ignore']
-        df = df.loc[:, ['Time','Open', 'High', 'Low', 'Close']]
+        df = df.loc[:, ['Time','Open', 'High', 'Low', 'Close', 'Volume']]
         df["Time"] = pd.to_datetime(df["Time"], unit='ms')
         df["Open"] = df["Open"].astype(float)
         df["High"] = df["High"].astype(float)
         df["Low"] = df["Low"].astype(float)
         df["Close"] = df["Close"].astype(float)
+        df["Volume"] = df["Volume"].astype(float)
 
         return df
 
 #=====================================================================================================================
 
     def Pattern_Detect(self):
-        global side, take_profit, entry_price, high, low, close, open       
+        global side, high, low, close, open, volume
 
         dd = df.tail(4)
         rr = len(df.index)
@@ -115,6 +116,8 @@ class PatternDetect:
         high = df["High"][rr - 2] 
         low = df["Low"][rr - 2] 
         close = df['Close'][rr - 2] 
+        volume = df['Volume'][rr - 2] 
+
         hc = high - close
         lc = close - low
         llc = lc * 4
@@ -129,8 +132,6 @@ class PatternDetect:
             if lc > 0: # Upper wick high but low body                
                 if hc > llc:
                     side = "BUY"
-        else:
-            side = "NONE"  
 
         
 def exit():
@@ -147,7 +148,6 @@ def exit():
     if status == "FILLED" or status == "CANCELED":
 
         db.put_order_Exit(pair)
-        insert_TH(th) 
         print("Order FILLED", orderIdTP, pair)
         quit()
 
@@ -155,7 +155,6 @@ def exit():
         CreateOrder.cancel_order(orderId, pair, qty, side)
         CreateOrder.cancel_order2(orderIdTP, pair)
         db.put_order_Exit(pair)
-        insert_TH(th) 
         print("EXIT by Time Frame.")
         quit()
 
@@ -164,7 +163,7 @@ def exit():
 pattern_detect = PatternDetect()
 asyncio.get_event_loop().run_until_complete(pattern_detect.main())
 
-schedule.every(tf).minutes.do(exit)
+if volume >= 60000: schedule.every(tf).minutes.do(exit)
 
 while True:
     schedule.run_pending()

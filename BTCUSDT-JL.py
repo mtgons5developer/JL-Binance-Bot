@@ -85,7 +85,7 @@ class PatternDetect:
             self.Pattern_Detect()
             print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')
             await client.close_connection()
-            CreateOrder.futures_order(pair, qty, side, high, timeframe, low)
+            if volume >= 3000: CreateOrder.futures_order(pair, qty, side, high, timeframe, low)
 
 #=====================================================================================================================
 
@@ -94,20 +94,21 @@ class PatternDetect:
 
         df = pd.DataFrame(msg)
         df.columns = ['Time','Open', 'High', 'Low', 'Close', 'Volume','CloseTime', 'qav','num_trades','taker_base_vol', 'taker_quote_vol', 'ignore']
-        df = df.loc[:, ['Time','Open', 'High', 'Low', 'Close']]
+        df = df.loc[:, ['Time','Open', 'High', 'Low', 'Close', 'Volume']]
         df["Time"] = pd.to_datetime(df["Time"], unit='ms')
         df["Open"] = df["Open"].astype(float)
         df["High"] = df["High"].astype(float)
         df["Low"] = df["Low"].astype(float)
         df["Close"] = df["Close"].astype(float)
+        df["Volume"] = df["Volume"].astype(float)
 
         return df
 
 #=====================================================================================================================
 
     def Pattern_Detect(self):
-        global side, take_profit, entry_price, high, low, close, open       
-
+        global side, take_profit, entry_price, high, low, close, open, volume
+        
         dd = df.tail(4)
         rr = len(df.index)
 
@@ -115,22 +116,22 @@ class PatternDetect:
         high = df["High"][rr - 2] 
         low = df["Low"][rr - 2] 
         close = df['Close'][rr - 2] 
+        volume = df['Volume'][rr - 2] 
+
         hc = high - close
         lc = close - low
         llc = lc * 4
-        
+
         if open > close:
             side = "BUY"
-            if lc > 0: # Upper wick high but large body                
+            if lc > 0: # Upper wick high but large body
                 if hc < llc:
                     side = "SELL"
         elif open < close:
             side = "SELL"
-            if lc > 0: # Upper wick high but low body                
+            if lc > 0: # Upper wick high but low body   
                 if hc > llc:
                     side = "BUY"
-        else:
-            side = "NONE"  
 
         
 def exit():
@@ -162,7 +163,7 @@ def exit():
 pattern_detect = PatternDetect()
 asyncio.get_event_loop().run_until_complete(pattern_detect.main())
 
-schedule.every(tf).minutes.do(exit)
+if volume >= 3000: schedule.every(tf).minutes.do(exit)
 
 while True:
     schedule.run_pending()

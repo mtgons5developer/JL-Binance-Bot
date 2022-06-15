@@ -41,16 +41,17 @@ class PatternDetect:
             # BTCUSDT, ETHUSDT, BNBUSDT, XRPUSDT, SOLUSDT, ADAUSDT, LTCUSDT, TRXUSDT
             # DOGEUSDT, AVAXUSDT, DOTUSDT, MATICUSDT, BCHUSDT, EOSUSDT
 
-            rr = db.get_order_EntryStatus(pair)
-            if rr != "2" or rr != "1": status = 2
+            # rr = db.get_order_EntryStatus(pair)
+            # if rr != "2" or rr != "1": status = 2
 
-            for x in rr:
-                xx += 1
-                status = x['status']
-            
-            if pair == "BTCUSDT" and status == 2:
+            # for x in rr:
+            #     xx += 1
+            #     status = x['status']
+        
+
+            if pair == "BTCUSDT":# and status == 2:
                 found = 1
-                break
+                break  
 
         if found == 1:
 
@@ -87,10 +88,7 @@ class PatternDetect:
                 self.Pattern_Detect()
                 print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')
                 
-                if volume >= 60000: 
-                    CreateOrder.futures_order(pair, qty, side, high, timeframe, low)
-                else:
-                    quit()
+                CreateOrder.futures_order(pair, qty, side, high, timeframe, low)
 
                 await client.close_connection()
 
@@ -130,13 +128,13 @@ class PatternDetect:
             df.loc[idx,'BullishPB'] = realbody <= candle_range/3 and  min(current['Open'], current['Close']) > (current['High'] + current['Low'])/2 and current['Low'] < prev['Low'] # Bullish pin bar
             df.loc[idx,'BullishE'] = current['High'] > prev['High'] and current['Low'] < prev['Low'] and realbody >= 0.8 * candle_range and current['Close'] > current['Open'] #Bullish engulfing            
             
-            df.loc[idx,'BearishS '] = current['High'] < prev['High'] and prev['High'] > prev_2['High'] #Bearish Swing            
+            df.loc[idx,'BearishS'] = current['High'] < prev['High'] and prev['High'] > prev_2['High'] #Bearish Swing            
             df.loc[idx,'BearishPB'] = realbody <= candle_range/3 and max(current['Open'] , current['Close']) < (current['High'] + current['Low'])/2 and current['High'] > prev['High'] # Bearish pin bar
             df.loc[idx,'BearishE'] = current['High'] > prev['High'] and current['Low'] < prev['Low'] and realbody >= 0.8 * candle_range and current['Close'] < current['Open'] # Bearish engulfing
 
             # Still needs historical data
-            # df.loc[idx,'Inside bar'] = current['High'] < prev['High'] and current['Low'] > prev['Low'] # Inside bar 
-            # df.loc[idx,'Outside bar'] = current['High'] > prev['High'] and current['Low'] < prev['Low'] # Outside bar
+            df.loc[idx,'InsideB'] = current['High'] < prev['High'] and current['Low'] > prev['Low'] # Inside bar 
+            df.loc[idx,'OutsideB'] = current['High'] > prev['High'] and current['Low'] < prev['Low'] # Outside bar
             
         print(df.tail(4))
         rr = len(df.index)
@@ -145,7 +143,7 @@ class PatternDetect:
         high = df["High"][rr - 2]
         low = df["Low"][rr - 2]
         close = df["Close"][rr - 2]
-
+        
         if df["BullishS"][rr - 2] == True:
             side = "BUY"
         elif df["BullishPB"][rr - 2] == True:
@@ -153,10 +151,16 @@ class PatternDetect:
         elif df["BullishE"][rr - 2] == True:
             side = "BUY"
         elif df["BearishS"][rr - 2] == True:
-            side = "SELL"
+            side = "SELL"            
         elif df["BearishPB"][rr - 2] == True:
             side = "SELL"
         elif df["BearishE"][rr - 2] == True:
+            side = "SELL"
+        elif df["InsideB"][rr - 2] == True:
+            side = "BUY"
+        elif df["OutsideB"][rr - 2] == True:
+            side = "BUY"            
+        else:
             side = "SELL"
 
         # with open('output.txt', 'w') as f:

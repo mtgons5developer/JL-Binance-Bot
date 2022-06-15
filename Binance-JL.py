@@ -4,13 +4,11 @@ import subprocess
 
 from binance.client import Client
 
+from TH import insert_TH
 import callDB
 db = callDB.call()
 
 import config
-
-# https://stackoverflow.com/questions/22715086/scheduling-python-script-to-run-every-hour-accurately
-# https://schedule.readthedocs.io/en/stable/
 
 # BTCUSDT, ETHUSDT, BNBUSDT, XRPUSDT, SOLUSDT, LUNAUSDT, ADAUSDT, USTUSDT, BUSDUSDT, 
 # DOGEUSDT, AVAXUSDT, DOTUSDT, SHIBUSDT, WBTCUSDT, DAIUSDT, MATICUSDT
@@ -34,14 +32,22 @@ def timer():
     second += 2
 
 def entry():
-    
+
     BTCUSDT = ""
     ETHUSDT = ""
     BNBUSDT = ""
+    BCHUSDT = ""
+    EOSUSDT = ""    
     XRPUSDT = ""
     SOLUSDT = ""
+    LTCUSDT = ""
+    TRXUSDT = ""
+    DOGEUSDT = ""
+    AVAXUSDT = ""
+    DOTUSDT = ""
+    MATICUSDT = ""
     ADAUSDT = ""
-
+    
     result = db.get_toggle()
     yy = 0
     for y in result:
@@ -65,8 +71,24 @@ def entry():
             SOLUSDT = "& python3 SOLUSDT.py"
         elif pair == "ADAUSDT":
             ADAUSDT = "& python3 ADAUSDT.py"
+        elif pair == "LTCUSDT":
+            LTCUSDT = "& python3 LTCUSDT.py"
+        elif pair == "TRXUSDT":
+            TRXUSDT = "& python3 TRXUSDT.py"
+        elif pair == "DOGEUSDT":
+            DOGEUSDT = "& python3 DOGEUSDT.py"
+        elif pair == "AVAXUSDT":
+            AVAXUSDT = "& python3 AVAXUSDT.py"
+        elif pair == "DOTUSDT":
+            DOTUSDT = "& python3 DOTUSDT.py"
+        elif pair == "MATICUSDT":
+            MATICUSDT = "& python3 MATICUSDT.py"
+        elif pair == "BCHUSDT":
+            BCHUSDT = "& python3 BCHUSDT.py"
+        elif pair == "EOSUSDT":
+            EOSUSDT = "& python3 EOSUSDT.py"
 
-    subprocess.run(BTCUSDT + ETHUSDT + BNBUSDT + XRPUSDT + SOLUSDT + ADAUSDT, shell=True)
+    subprocess.run(BTCUSDT + ETHUSDT + BNBUSDT + XRPUSDT + SOLUSDT + ADAUSDT + LTCUSDT + TRXUSDT + DOGEUSDT + AVAXUSDT + DOTUSDT + MATICUSDT + BCHUSDT + EOSUSDT, shell=True)
 
 result = db.get_toggle()
 yy = 0
@@ -81,26 +103,24 @@ for x in result:
     db.put_order_Exit(pair)
     print("Active Pairs:", pair, tf)
 
+# result = db.get_order_EntryStatus("BTCUSDT")
+# for x in result: print(x['status'])
+# quit()
 timer()
 
 while True:
 
-    #if coin is activated then read order entry at X time.
     second += 1
-    print(minute, second)
     
-    if second == 1:
-        if minute == 28:# or minute == 10 or minute == 15 or minute == 20 or minute == 25 or minute == 30 or minute == 35 or minute == 40 or minute == 45 or minute == 50 or minute == 55 or minute == 0:
-            print("Entry", minute)
-            entry()
-            timer()
-            print("Exit")
-
-    # if minute == 4 and second == 1:
-    #     print("Entry")
-    #     entry()
-    #     timer()
-    #     print("Exit")
+    if minute == 0 and second == 1:
+        print("Main:", minute, second)
+        
+        print("Entry", minute)
+        entry()
+        th = datetime.strftime(datetime.now() - timedelta(1), '%Y-%m-%d')
+        insert_TH(th) 
+        timer()
+        print("Exit", minute, second)
 
     if second >= 60:
         second = 0
@@ -111,4 +131,36 @@ while True:
     
     time.sleep(1)
 
+# {'symbol': 'BTCUSDT', 'initialMargin': '4.95575009', 'maintMargin': '0.11893800', 'unrealizedProfit': '-0.06450000', 'positionInitialMargin': '4.95575009', 
+# 'openOrderInitialMargin': '0', 'leverage': '6', 'isolated': True, 'entryPrice': '29670.0', 'maxNotional': '20000000', 'positionSide': 'BOTH', 
+# 'positionAmt': '-0.001', 'notional': '-29.73450000', 'isolatedWallet': '4.93323209', 'updateTime': 1654335480477, 'bidNotional': '0', 'askNotional': '0'},
 
+# {'feeTier': 0, 'canTrade': True, 'canDeposit': True, 'canWithdraw': True, 'updateTime': 0, 'totalInitialMargin': '4.95550579', 'totalMaintMargin': '0.11893213',
+#  'totalWalletBalance': '25.45013785', 'totalUnrealizedProfit': '-0.06303420', 'totalMarginBalance': '25.38710365', 'totalPositionInitialMargin': '4.95550579', 
+#  'totalOpenOrderInitialMargin': '0.00000000', 'totalCrossWalletBalance': '20.51690576', 'totalCrossUnPnl': '0.00000000', 'availableBalance': '20.51690576',
+#   'maxWithdrawAmount': '20.51690576', 'assets': [{'asset': 'DOT', 'walletBalance': '0.00000000', 'unrealizedProfit': '0.00000000', 'marginBalance': '0.00000000',
+#    'maintMargin': '0.00000000', 'initialMargin': '0.00000000', 'positionInitialMargin': '0.00000000', 'openOrderInitialMargin': '0.00000000', 
+#    'maxWithdrawAmount': '0.00000000', 'crossWalletBalance': '0.00000000', 'crossUnPnl': '0.00000000', 'availableBalance': '0.00000000', 'marginAvailable': True, 
+#    'updateTime': 0}, {'asset': 'BTC', 'walletBalance': '0.00000000', 'unrealizedProfit': '0.00000000', 'marginBalance': '0.00000000', 
+#    'maintMargin': '0.00000000', 'initialMargin': '0.00000000', 'positionInitialMargin': '0.00000000', 'openOrderInitialMargin': '0.00000000', 
+#    'maxWithdrawAmount': '0.00000000', 'crossWalletBalance': '0.00000000', 'crossUnPnl': '0.00000000', 'availableBalance': '0.00000000', 
+#    'marginAvailable': True, 'updateTime': 1653802590669}, {'asset': 'SOL', 'walletBalance': '0.00000000', 'unrealizedProfit': '0.00000000', 
+#    'marginBalance': '0.00000000', 'maintMargin': '0.00000000', 'initialMargin': '0.00000000', 'positionInitialMargin': '0.00000000',
+#     'openOrderInitialMargin': '0.00000000', 'maxWithdrawAmount': '0.00000000', 'crossWalletBalance': '0.00000000', 'crossUnPnl': '0.00000000',
+#      'availableBalance': '0
+
+# while 1==1:
+#     orders = client.futures_account()['positions']
+#     for x in orders:
+#         pnl = float(x['unrealizedProfit'])
+#         symbol = x['symbol']
+#         margin = float(x['initialMargin'])
+
+#         if pnl != 0 and symbol == 'ETHUSDT': 
+#             print("PNL:", round(pnl, 2), symbol, round(margin, 1), "USDT")
+#         if pnl != 0 and symbol == 'BTCUSDT': 
+#             print("PNL:", round(pnl, 2), symbol, round(margin, 1), "USDT")
+
+#     time.sleep(1)
+
+# print(client.futures_position_information())

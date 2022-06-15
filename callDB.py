@@ -183,21 +183,42 @@ class call:
         
         cnx.close()
                           
-    def put_orderID(self, pair, orderId, side, qty, market_price, take_profit, orderIdTP, timeframe):
+    def put_orderID(self, pair, orderId, side, qty, market_price, take_profit, orderIdTP, timeframe, balance):
 
         self.get_cnx()
         cursor = cnx.cursor()
 
-        query = """INSERT IGNORE INTO order_entry (pair, orderId, side, qty, entryPrice, status, close_pos, orderIdTP, timeframe) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+        query = """INSERT IGNORE INTO order_entry (pair, orderId, side, qty, entryPrice, status, close_pos, orderIdTP, timeframe, balance) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
-        values = (pair, int(orderId), side, float(qty), float(market_price), '1', float(take_profit), int(orderIdTP), timeframe)
+        values = (pair, int(orderId), side, float(qty), float(market_price), '1', float(take_profit), int(orderIdTP), timeframe, float(balance))
 
         cursor.execute(query, values)
-            
-        cnx.commit()
-        cursor.close()
+        try:
+            cnx.commit()
+            cursor.close()
+        except:
+            cnx.rollback()
+
         cnx.close()
-        print("-------Order Entry Success-------\n", pair)
+        # print("-------Order Entry Success-------\n", pair)
+
+    def put_homemsg(self, pair, timeframe, side, username):
+
+        self.get_cnx()
+        cursor = cnx.cursor()
+        query = """INSERT IGNORE INTO home_msg (pair, timeframe, side, username) VALUES (%s, %s, %s, %s)"""
+        
+        values = (pair, timeframe, side, username)
+
+        cursor.execute(query, values)
+        try:
+            cnx.commit()
+            cursor.close()
+        except:
+            cnx.rollback()
+
+        cnx.close()
+        # print("-------Home Message Success-------\n", pair)
                             
     def put_orderTest(self, pair, qty, entry_price, take_profit, side, order_type, timeframe):
 
@@ -249,6 +270,20 @@ class call:
             return status            
         
         cnx.close()
+
+    def get_user(self):
+
+        try:
+            self.get_cnx()
+            cursor = cnx.cursor(dictionary=True)
+            cursor.execute("SELECT name FROM users WHERE api_key='" + config.BINANCE_API_KEY + "'")
+            dd = cursor.fetchone()
+            cnx.close()
+            return dd
+
+        except:
+            cursor.close()
+            cnx.close()
 
     def get_cnx(self):
         global cnx

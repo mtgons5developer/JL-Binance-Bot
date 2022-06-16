@@ -10,7 +10,7 @@ from binance.helpers import round_step_size
 
 client = Client(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
 # print("Logged in")
-    
+
 class call:
 # =============================FUTURES=============================
 
@@ -38,6 +38,7 @@ class call:
             tp_sell = float(format(tp_sell).replace("-",""))
 
             profit = 0.30
+            fee_range = 0.0025
 
             if side == "BUY":
 
@@ -46,9 +47,14 @@ class call:
                 tp_buy = (tp_buy * profit)
 
                 take_profit = tp_buy + market_price
+                fee = market_price * fee_range
+
+                if take_profit < fee: # Resistance
+                    take_profit = fee
+
                 deci = self.get_quantity_precision(pair)
                 take_profit = round(take_profit, deci)
-                print("TP:", take_profit, pair)
+                # print("TP:", take_profit, pair)
                                     
             elif side == "SELL":
 
@@ -56,9 +62,14 @@ class call:
                 tp_sell = (tp_sell * profit)
 
                 take_profit = market_price - tp_sell
+                fee = market_price * fee_range
+                
+                if take_profit < fee:
+                    take_profit = fee
+
                 deci = self.get_quantity_precision(pair)
                 take_profit = round(take_profit, deci)
-                print("TP:", take_profit, pair)
+                # print("TP:", take_profit, pair)
 
             order2 = client.futures_create_order(
                 symbol=pair,
@@ -68,17 +79,33 @@ class call:
                     timeInForce='GTC',
                     stopPrice=take_profit,
                     quantity=1,
-                    reduceOnly=True,
+                    closePosition=True,
                     recvWindow=15000,
                     workingType= 'MARK_PRICE')
 
             orderIdTP = order2["orderId"]
 
-            print("\nOrderID: %(n)s \nOrderIdTP: %(b)s \nMarket Price: %(c)s \nTake Profit: %(e)s \nQuantity: %(f)s \nTime Frame: %(g)s" % 
-                {'n': orderId, 'b': orderIdTP, 'c': market_price, 'e': take_profit, 'f': qty, 'g': timeframe})
+            time.sleep(5)
+            # order3 = client.futures_create_order(
+            #     symbol=pair,
+            #     side=side2,
+            #     type="STOP_MARKET",
+            #         timeInForce='GTC',
+            #         stopPrice=stop_loss,
+            #         closePosition=True)
+            
+            # time.sleep(5)
+            # orderIdSL = order2["orderId"]
 
-            db.put_orderID(pair, orderId, side, market_price, qty, take_profit, orderIdTP, timeframe)
-            print('-------Order Executed-------', pair)
+            username = db.get_user()["name"]
+            balance = round(float(client.futures_account()['totalWalletBalance']), 3)
+
+            print("\nOrderID: %(n)s \nOrderIdTP: %(b)s \nMarket Price: %(c)s \nTake Profit: %(e)s \nQuantity: %(f)s \nTime Frame: %(g)s \nBlance: %(h)s \nUsername: %(i)s" % 
+                {'n': orderId, 'b': orderIdTP, 'c': market_price, 'e': take_profit, 'f': qty, 'g': timeframe, 'h': balance, 'i': username})
+
+            db.put_orderID(pair, orderId, side, market_price, qty, take_profit, orderIdTP, timeframe, balance)            
+            db.put_homemsg(pair, timeframe, side, username)
+            # print('-------Order Executed-------', pair)
 
         except BinanceAPIException as e:
             print(e.status_code)

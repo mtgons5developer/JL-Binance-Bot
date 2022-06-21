@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import mysql.connector
 from mysql.connector import errorcode
 
@@ -18,9 +20,20 @@ class call:
 
             return toggle
 
-        except:
-            cursor.close()
-            cnx.close()
+        except mysql.connector.Error as err:
+
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_ACCESS_DENIED_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_BAD_DB_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            else:
+                print(err, "Error: get_cnx")
 
     #====================
 
@@ -37,9 +50,20 @@ class call:
 
             return status
 
-        except:
-            cursor.close()
-            cnx.close()
+        except mysql.connector.Error as err:
+
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_ACCESS_DENIED_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_BAD_DB_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            else:
+                print(err, "Error: get_cnx")
 
     def get_order_EntryStatus(self, pair):
         
@@ -54,20 +78,48 @@ class call:
 
             return status
 
-        except:
-            cursor.close()
-            cnx.close()
+        except mysql.connector.Error as err:
+
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_ACCESS_DENIED_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_BAD_DB_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            else:
+                print(err, "Error: get_cnx")
 
     def get_TH_pair(self, uuid):
 
-        self.get_cnx()
-        cursor = cnx.cursor()
-        sql = "SELECT symbol FROM tradeHistory WHERE uuid='" + uuid + "';"
-        cursor.execute(sql)
-        pair = cursor.fetchone()[0]
-        cnx.close()
+        try:
+            self.get_cnx()
+            cursor = cnx.cursor()
+            sql = "SELECT symbol FROM tradeHistory WHERE uuid='" + uuid + "';"
+            cursor.execute(sql)
+            pair = cursor.fetchone()[0]
+            cnx.close()
 
-        return pair
+            return pair
+            
+        except mysql.connector.Error as err:
+
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_ACCESS_DENIED_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_BAD_DB_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            else:
+                print(err, "Error: get_cnx")
+
 
     def get_TH_orderID(self, uuid):
 
@@ -82,12 +134,25 @@ class call:
 
             return orderId
 
-        except:
-            cursor.close()
-            cnx.close()
+        except mysql.connector.Error as err:
+
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_ACCESS_DENIED_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_BAD_DB_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            else:
+                print(err, "Error: get_cnx")
+
 
     def get_TH_uuid(self):
         global th_orderID
+
         try:
 
             self.get_cnx()
@@ -99,9 +164,20 @@ class call:
 
             return str(th_orderID)
 
-        except:
-            cursor.close()
-            cnx.close()
+        except mysql.connector.Error as err:
+
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_ACCESS_DENIED_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_BAD_DB_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            else:
+                print(err, "Error: get_cnx")
 
     def get_qty(self, timeframe, pair):
         
@@ -118,158 +194,245 @@ class call:
             # print("Quantity:", qty)
             return qty
 
-        except:
+        except mysql.connector.Error as err:
+
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_ACCESS_DENIED_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_BAD_DB_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            else:
+                print(err, "Error: get_cnx")
+
+
+    def put_dateErrorSMA(self, timeframe, pair):
+
+        try:
+            self.get_cnx()
+            cursor = cnx.cursor(dictionary=True)
+            cursor.execute("UPDATE settings SET Error='SMA Add more DF.', toggle='2' WHERE timeframe='" + timeframe  + "' AND pair='" + pair + "'")            
+            cnx.commit()
+            cnx.close() 
+
+        except mysql.connector.Error as err:
+
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_ACCESS_DENIED_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_BAD_DB_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            else:
+                print(err, "Error: get_cnx")
+
+    def put_dateErrorRSI(self, timeframe, pair):
+
+        try:
+            self.get_cnx()
+            cursor = cnx.cursor(dictionary=True)
+            cursor.execute("UPDATE settings SET Error='RSI Add more DF.', toggle='2' WHERE timeframe='" + timeframe  + "' AND pair='" + pair + "'")            
+            cnx.commit()
+            cnx.close()
+
+        except mysql.connector.Error as err:
+
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_ACCESS_DENIED_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_BAD_DB_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            else:
+                print(err, "Error: get_cnx")
+
+    def put_dateErrorPair(self, timeframe, pair):
+
+        try:
+            self.get_cnx()
+            cursor = cnx.cursor(dictionary=True)
+            cursor.execute("UPDATE settings SET Error='Duplicate pair detected.', toggle='2' WHERE timeframe='" + timeframe  + "' AND pair='" + pair + "'")            
+            cnx.commit()
+            cnx.close()
+
+        except mysql.connector.Error as err:
+
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_ACCESS_DENIED_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_BAD_DB_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            else:
+                print(err, "Error: get_cnx")
+
+    def put_orderID(self, pair, orderId, side, qty, market_price, take_profit, orderIdTP, timeframe, balance):
+
+        try:
+            self.get_cnx()
+            cursor = cnx.cursor()
+
+            query = """INSERT IGNORE INTO order_entry (pair, orderId, side, qty, entryPrice, status, close_pos, orderIdTP, timeframe, balance) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+
+            values = (pair, int(orderId), side, float(qty), float(market_price), '1', float(take_profit), int(orderIdTP), timeframe, float(balance))
+
+            cursor.execute(query, values)            
+            cnx.commit()
             cursor.close()
             cnx.close()
 
+        except mysql.connector.Error as err:
 
-    # def get_startDate(self, timeframe):
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_ACCESS_DENIED_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_BAD_DB_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            else:
+                print(err, "Error: get_cnx")
+
         
-    #     self.get_cnx()
-    #     cursor = cnx.cursor(dictionary=True)
-
-    #     try:
-    #         cursor.execute("SELECT datetime FROM settings WHERE timeframe='" + timeframe + "' AND toggle='1'")
-
-    #         dd = cursor.fetchone()
-    #         date = dd["datetime"]
-    #         startDate = date.strftime("%d-%m-%Y")  
-
-    #     except:
-    #         t = date.today()
-    #         y = t - timedelta(days = 1)
-    #         startDate = y.strftime('%d %m %Y')            
-
-    #     cnx.close()
-    #     # print("startDate:", startDate)
-    #     return startDate
-
-    def put_dateErrorSMA(self, timeframe, pair):
-        
-        self.get_cnx()
-        cursor = cnx.cursor(dictionary=True)
-        cursor.execute("UPDATE settings SET Error='SMA Add more DF.', toggle='2' WHERE timeframe='" + timeframe  + "' AND pair='" + pair + "'")
-
-        try:
-            cnx.commit()
-        except:
-            cnx.rollback()
-        
-        cnx.close()
-
-    def put_dateErrorRSI(self, timeframe, pair):
-        
-        self.get_cnx()
-        cursor = cnx.cursor(dictionary=True)
-        cursor.execute("UPDATE settings SET Error='RSI Add more DF.', toggle='2' WHERE timeframe='" + timeframe  + "' AND pair='" + pair + "'")
-
-        try:
-            cnx.commit()
-        except:
-            cnx.rollback()
-        
-        cnx.close()
-
-    def put_dateErrorPair(self, timeframe, pair):
-        
-        self.get_cnx()
-        cursor = cnx.cursor(dictionary=True)
-        cursor.execute("UPDATE settings SET Error='Duplicate pair detected.', toggle='2' WHERE timeframe='" + timeframe  + "' AND pair='" + pair + "'")
-
-        try:
-            cnx.commit()
-        except:
-            cnx.rollback()
-        
-        cnx.close()
-                          
-    def put_orderID(self, pair, orderId, side, qty, market_price, take_profit, orderIdTP, timeframe, balance):
-
-        self.get_cnx()
-        cursor = cnx.cursor()
-
-        query = """INSERT IGNORE INTO order_entry (pair, orderId, side, qty, entryPrice, status, close_pos, orderIdTP, timeframe, balance) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
-
-        values = (pair, int(orderId), side, float(qty), float(market_price), '1', float(take_profit), int(orderIdTP), timeframe, float(balance))
-
-        cursor.execute(query, values)
-        try:
-            cnx.commit()
-            cursor.close()
-        except:
-            cnx.rollback()
-
-        cnx.close()
-        # print("-------Order Entry Success-------\n", pair)
 
     def put_homemsg(self, pair, timeframe, side, username):
 
-        self.get_cnx()
-        cursor = cnx.cursor()
-        query = """INSERT IGNORE INTO home_msg (pair, timeframe, side, username) VALUES (%s, %s, %s, %s)"""
-        
-        values = (pair, timeframe, side, username)
-
-        cursor.execute(query, values)
         try:
+            self.get_cnx()
+            cursor = cnx.cursor()
+            query = """INSERT IGNORE INTO home_msg (pair, timeframe, side, username) VALUES (%s, %s, %s, %s)"""
+            values = (pair, timeframe, side, username)
+            cursor.execute(query, values)
             cnx.commit()
             cursor.close()
-        except:
-            cnx.rollback()
+            cnx.close()
 
-        cnx.close()
-        # print("-------Home Message Success-------\n", pair)
-                            
+        except mysql.connector.Error as err:
+
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_ACCESS_DENIED_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_BAD_DB_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            else:
+                print(err, "Error: get_cnx")
+
+                                    
     def put_orderTest(self, pair, qty, entry_price, take_profit, side, order_type, timeframe):
 
-        self.get_cnx()
-        cursor = cnx.cursor()
+        try:
 
-        query = """INSERT IGNORE INTO order_entry (pair, qty, entryPrice, status, side, order_type, timeframe, close_pos) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
+            self.get_cnx()
+            cursor = cnx.cursor()
 
-        values = (pair, float(qty), float(entry_price), "1", side, order_type, timeframe, int(take_profit))
+            query = """INSERT IGNORE INTO order_entry (pair, qty, entryPrice, status, side, order_type, timeframe, close_pos) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
 
-        cursor.execute(query, values)
-            
-        cnx.commit()
-        cursor.close()
-        cnx.close()
-        print("Completed put_orderTest")
+            values = (pair, float(qty), float(entry_price), "1", side, order_type, timeframe, int(take_profit))
+
+            cursor.execute(query, values)
+                
+            cnx.commit()
+            cursor.close()
+            cnx.close()
+
+        except mysql.connector.Error as err:
+
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_ACCESS_DENIED_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_BAD_DB_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            else:
+                print(err, "Error: get_cnx")
 
     def put_orderTest_Exit(self, pair, order_type, timeframe, win_lose):
 
-        self.get_cnx()
-        cursor = cnx.cursor()
+        try:
 
-        query = """INSERT IGNORE INTO order_entry (pair, status, timeframe, win_lose) VALUES (%s, %s, %s, %s)"""
+            self.get_cnx()
+            cursor = cnx.cursor()
 
-        values = (pair, "2", order_type, timeframe, win_lose)
+            query = """INSERT IGNORE INTO order_entry (pair, status, timeframe, win_lose) VALUES (%s, %s, %s, %s)"""
 
-        cursor.execute(query, values)
-            
-        cnx.commit()
-        cursor.close()
-        cnx.close()
-        print("Completed put_orderTest_Exit")
+            values = (pair, "2", order_type, timeframe, win_lose)
+
+            cursor.execute(query, values)
+                
+            cnx.commit()
+            cursor.close()
+            cnx.close()
+
+        except mysql.connector.Error as err:
+
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_ACCESS_DENIED_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_BAD_DB_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            else:
+                print(err, "Error: get_cnx")
 
     def put_order_Exit(self, pair):
 
-        self.get_cnx()
-        cursor = cnx.cursor(dictionary=True)
-        cursor.execute("UPDATE order_entry SET status='2' WHERE status='1' AND pair='" + pair + "'")
-
         try:
+            self.get_cnx()
+            cursor = cnx.cursor(dictionary=True)
+            cursor.execute("UPDATE order_entry SET status='2' WHERE status='1' AND pair='" + pair + "'")
             cnx.commit()
+            cnx.close()
             print("Completed put_order_Exit")
+
             status = 1
             return status
-        except:
-            print("put_order_Exit ERROR")
-            cnx.rollback()
-            status = 1
-            return status            
-        
-        cnx.close()
+       
+        except mysql.connector.Error as err:
+
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_ACCESS_DENIED_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_BAD_DB_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            else:
+                print(err, "Error: get_cnx")
 
     def get_user(self):
 
@@ -279,11 +442,29 @@ class call:
             cursor.execute("SELECT name FROM users WHERE api_key='" + config.BINANCE_API_KEY + "'")
             dd = cursor.fetchone()
             cnx.close()
+
             return dd
 
-        except:
-            cursor.close()
-            cnx.close()
+        except mysql.connector.Error as err:
+
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_ACCESS_DENIED_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            elif err.errno == errorcode.ER_BAD_DB_ERROR:
+                error_info = "\n" + datetime + errorcode.ER_BAD_DB_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
+            else:
+                print(err, "Error: get_cnx")
+
+    def write_error(self, error_info):
+
+        with open('debug.txt', 'a') as f:
+            f.write(error_info)
+                
 
     def get_cnx(self):
         global cnx
@@ -293,11 +474,17 @@ class call:
 
         except mysql.connector.Error as err:
 
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                print("Something is wrong with your user name or password")
+                error_info = "\n" + datetime + errorcode.ER_ACCESS_DENIED_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
             elif err.errno == errorcode.ER_BAD_DB_ERROR:
-                print("Database does not exist")
+                error_info = "\n" + datetime + errorcode.ER_BAD_DB_ERROR + "\n"
+                print(error_info)
+                self.write_error(error_info)  
             else:
-                print(err, "get_cnx")
+                print(err, "Error: get_cnx")
 
         return cnx    

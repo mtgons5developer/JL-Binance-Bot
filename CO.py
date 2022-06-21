@@ -4,17 +4,119 @@ import config
 from binance.enums import *
 from binance.exceptions import BinanceAPIException, BinanceOrderException
 import callDB
-
 db = callDB.call()
-from binance.helpers import round_step_size
-
 client = Client(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
 # print("Logged in")
 
 class call:
 # =============================FUTURES=============================
 
-    def futures_order(self, pair, qty, side, high, timeframe, low):
+    def futures_order_main(self, pair, qty, side, timeframe, high, low):
+
+        try:
+            order = client.futures_create_order(
+                symbol=pair,
+                side=side,
+                type="MARKET",
+                quantity=qty,
+                recvWindow=15000)          
+
+            time.sleep(2)            
+            orderId = order["orderId"]
+            side = order["side"]
+            market_price = self.check_avgPrice(orderId, pair)
+            market_price = float(market_price)
+
+            tp_buy = float(high) - market_price
+            tp_buy = float(format(tp_buy).replace("-",""))
+
+            tp_sell = market_price - float(low)
+            tp_sell = float(format(tp_sell).replace("-",""))
+
+            profit = 0.65
+            fee_range = 0.0025
+
+            if side == "BUY":
+
+                side2 = "SELL"
+                tp_buy
+                tp_buy = (tp_buy * profit)
+
+                # take_profit = tp_buy + market_price
+                take_profit = abs(tp_buy - market_price)
+                fee = market_price * fee_range
+
+                if take_profit <= fee: # Resistance
+                    take_profit = fee
+
+                deci = self.get_quantity_precision(pair)
+                take_profit = round(take_profit, deci)
+                print("TP:", take_profit, pair)
+
+            elif side == "SELL":
+
+                side2 = "BUY"
+                tp_sell = (tp_sell * profit)
+
+                # take_profit = market_price - tp_sell
+                take_profit = market_price + tp_sell
+                fee = market_price * fee_range
+
+                if take_profit <= fee:
+                    take_profit = fee
+
+                deci = self.get_quantity_precision(pair)
+                take_profit = round(take_profit, deci)
+                print("TP:", take_profit, pair)
+
+            order2 = client.futures_create_order(
+
+                symbol=pair,
+                side=side2,
+                positionSide='BOTH',
+                type="STOP_MARKET",
+                timeInForce='GTC',
+                stopPrice=take_profit,
+                quantity=1,
+                closePosition=True,
+                recvWindow=15000,
+                workingType= 'MARK_PRICE')
+
+            orderIdTP = order2["orderId"]
+            time.sleep(1)
+
+            username = db.get_user()["name"]
+            balance = round(float(client.futures_account()['totalWalletBalance']), 3)
+
+            print("\nOrderID: %(n)s \nOrderIdTP: %(b)s \nMarket Price: %(c)s \nStop Loss: %(e)s \nQuantity: %(f)s \nTime Frame: %(g)s \nBlance: %(h)s \nUsername: %(i)s" % 
+                {'n': orderId, 'b': orderIdTP, 'c': market_price, 'e': take_profit, 'f': qty, 'g': timeframe, 'h': balance, 'i': username})
+               
+            db.put_orderID(pair, orderId, side, market_price, qty, take_profit, orderIdTP, timeframe, balance)               
+            db.put_homemsg(pair, timeframe, side, username)
+
+
+        except BinanceAPIException as e:
+
+            e1 = e.status_code
+            e2 = e.message
+            e3 = "Error: BinanceAPIException futures_order_main"
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
+            print(error_info)
+            db.write_error(error_info)         
+
+        except BinanceOrderException as e:
+
+            e1 = e.status_code
+            e2 = e.message
+            e3 = "Error: BinanceOrderException futures_order_main"
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
+            print(error_info)
+            db.write_error(error_info)     
+
+
+    def futures_order(self, pair, qty, side, timeframe):
         
         try:
             order = client.futures_create_order(
@@ -26,110 +128,65 @@ class call:
 
             time.sleep(5)
             orderId = order["orderId"]
-            side = order["side"]
-
             market_price = self.check_avgPrice(orderId, pair)
             market_price = float(market_price)
-
-            tp_buy = float(high) - market_price
-            tp_buy = float(format(tp_buy).replace("-",""))
-
-            tp_sell = market_price - float(low)
-            tp_sell = float(format(tp_sell).replace("-",""))
-
-            profit = 0.30
-            fee_range = 0.0025
-
-            if side == "BUY":
-
-                side2 = "SELL"
-                tp_buy
-                tp_buy = (tp_buy * profit)
-
-                take_profit = tp_buy + market_price
-                fee = market_price * fee_range
-
-                if take_profit < fee: # Resistance
-                    take_profit = fee
-
-                deci = self.get_quantity_precision(pair)
-                take_profit = round(take_profit, deci)
-                # print("TP:", take_profit, pair)
-                                    
-            elif side == "SELL":
-
-                side2 = "BUY"
-                tp_sell = (tp_sell * profit)
-
-                take_profit = market_price - tp_sell
-                fee = market_price * fee_range
-                
-                if take_profit < fee:
-                    take_profit = fee
-
-                deci = self.get_quantity_precision(pair)
-                take_profit = round(take_profit, deci)
-                # print("TP:", take_profit, pair)
-
-            order2 = client.futures_create_order(
-                symbol=pair,
-                side=side2,
-                positionSide='BOTH',
-                type="TAKE_PROFIT_MARKET",
-                    timeInForce='GTC',
-                    stopPrice=take_profit,
-                    quantity=1,
-                    closePosition=True,
-                    recvWindow=15000,
-                    workingType= 'MARK_PRICE')
-
-            orderIdTP = order2["orderId"]
-
-            time.sleep(5)
-            # order3 = client.futures_create_order(
-            #     symbol=pair,
-            #     side=side2,
-            #     type="STOP_MARKET",
-            #         timeInForce='GTC',
-            #         stopPrice=stop_loss,
-            #         closePosition=True)
-            
-            # time.sleep(5)
-            # orderIdSL = order2["orderId"]
 
             username = db.get_user()["name"]
             balance = round(float(client.futures_account()['totalWalletBalance']), 3)
 
-            print("\nOrderID: %(n)s \nOrderIdTP: %(b)s \nMarket Price: %(c)s \nTake Profit: %(e)s \nQuantity: %(f)s \nTime Frame: %(g)s \nBlance: %(h)s \nUsername: %(i)s" % 
-                {'n': orderId, 'b': orderIdTP, 'c': market_price, 'e': take_profit, 'f': qty, 'g': timeframe, 'h': balance, 'i': username})
+            print("\nOrderID: %(n)s \nMarket Price: %(c)s \nQuantity: %(f)s \nTime Frame: %(g)s \nBlance: %(h)s \nUsername: %(i)s" % 
+                {'n': orderId, 'c': market_price, 'f': qty, 'g': timeframe, 'h': balance, 'i': username})
 
-            db.put_orderID(pair, orderId, side, market_price, qty, take_profit, orderIdTP, timeframe, balance)            
+            db.put_orderID(pair, orderId, side, market_price, qty, timeframe, balance)            
             db.put_homemsg(pair, timeframe, side, username)
-            # print('-------Order Executed-------', pair)
+
+            return orderId
 
         except BinanceAPIException as e:
-            print(e.status_code)
-            print(e.message)
-            print("order1")
-            if e.status_code == 400:
-                print(qty)
-            error = e.status_code
-            # return error
+            e1 = e.status_code
+            e2 = e.message
+            e3 = "Error: BinanceAPIException futures_order"
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
+            print(error_info)
+            db.write_error(error_info)     
 
         except BinanceOrderException as e:
-            print(e.status_code)
-            print(e.message)
-            print("order2")
-            error = e.status_code
-            # return error
+            e1 = e.status_code
+            e2 = e.message
+            e3 = "Error: BinanceOrderException futures_order"
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
+            print(error_info)
+            db.write_error(error_info)    
 
     def get_quantity_precision(self, pair):    
-        info = client.futures_exchange_info() 
-        info = info['symbols']
-        for x in range(len(info)):
-            if info[x]['symbol'] == pair:
-                return info[x]['pricePrecision']
-        return None
+
+        try:
+
+            info = client.futures_exchange_info() 
+            info = info['symbols']
+            for x in range(len(info)):
+                if info[x]['symbol'] == pair:
+                    return info[x]['pricePrecision']
+
+        except BinanceAPIException as e:
+            e1 = e.status_code
+            e2 = e.message
+            e3 = "Error: BinanceAPIException get_quantity_precision"
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
+            print(error_info)
+            db.write_error(error_info)    
+  
+        except BinanceOrderException as e:
+            e1 = e.status_code
+            e2 = e.message
+            e3 = "Error: BinanceOrderException get_quantity_precision"
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
+            print(error_info)
+            db.write_error(error_info)   
 
     def check_order(self, orderIdTP, pair):
 
@@ -139,22 +196,29 @@ class call:
                 orderId=orderIdTP)
 
             status = result['status']
-            # print(result)
             return status
             
         except BinanceAPIException as e:
-            print(e.status_code)
-            print(e.message)
-            print("No order(s) found.", pair)
-
+            e1 = e.status_code
+            e2 = e.message
+            e3 = "Error: BinanceAPIException check_order"
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
+            print(error_info)
+            db.write_error(error_info)  
+  
         except BinanceOrderException as e:
-            print(e.status_code)
-            print(e.message)
-            print("check order2", pair)
+            e1 = e.status_code
+            e2 = e.message
+            e3 = "Error: BinanceOrderException check_order"
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
+            print(error_info)
+            db.write_error(error_info)  
 
         # ===========================================================================================
 
-    def cancel_order(self, orderID, pair, qty, side):
+    def cancel_order(self, orderId, pair, qty, side):
 
         if side == "BUY":
             side = "SELL"
@@ -169,77 +233,113 @@ class call:
                 quantity=qty,
                 recvWindow=5000)
             print('============================')	
-            print("Binance Futures order cancelled. ", 'OrderId:', orderID)
+            print("Binance Futures order cancelled. ", 'OrderId:', orderId)
             print('============================')	
-            # status = 1
-            # return status
+
         except BinanceAPIException as e:
-            print(e.status_code)
-            print(e.message)
-            print("cancel1 cancel_order")
-            # status = e
-            # status = 2
-            # return status
+            e1 = e.status_code
+            e2 = e.message
+            e3 = "Error: BinanceAPIException cancel_order"
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
+            print(error_info)
+            db.write_error(error_info)  
+  
         except BinanceOrderException as e:
-            print(e.status_code)
-            print(e.message)
-            print("cancel2 cancel_order")
-            # status = 3
-            # return status
-    def cancel_order2(self, orderId, pair):
+            e1 = e.status_code
+            e2 = e.message
+            e3 = "Error: BinanceOrderException cancel_order"
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
+            print(error_info)
+            db.write_error(error_info)  
+
+        # ===========================================================================================
+        
+    def cancel_order2(self, orderIdTP, pair):
 
         try:			
             result = client.futures_cancel_order(
                 symbol=pair,
-                orderId=orderId)
+                orderId=orderIdTP)
             print('============================')	
-            print("Binance Futures order cancelled. ", 'OrderId:', orderId)
+            print("Binance Futures order cancelled. ", 'OrderId:', orderIdTP)
             print('============================')	
-            # status = 1
-            # return status
+
         except BinanceAPIException as e:
-            print(e.status_code)
-            print(e.message)
-            print("cancel1 cancel_order2")
-            # status = 2
-            # return status       
-            #      
+            e1 = e.status_code
+            e2 = e.message
+            e3 = "Error: BinanceAPIException cancel_order2"
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
+            print(error_info)
+            db.write_error(error_info)  
+  
         except BinanceOrderException as e:
-            print(e.status_code)
-            print(e.message)
-            print("cancel2 cancel_order2")
-            # status = 3
-            # return status
-
-    def get_tick_size(self, symbol: str) -> float:
-        info = client.futures_exchange_info()
-
-        for symbol_info in info['symbols']:
-            if symbol_info['symbol'] == symbol:
-                for symbol_filter in symbol_info['filters']:
-                    if symbol_filter['filterType'] == 'PRICE_FILTER':
-                        return float(symbol_filter['tickSize'])
-
-
-    def get_rounded_price(self, symbol: str, price: float) -> float:
-        return round_step_size(price, self.get_tick_size(symbol))
+            e1 = e.status_code
+            e2 = e.message
+            e3 = "Error: BinanceOrderException cancel_order2"
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
+            print(error_info)
+            db.write_error(error_info)  
 
     def check_avgPrice(self, orderIdTP, pair):
 
-            try:
-                result = client.futures_get_order(
-                    symbol=pair,
-                    orderId=orderIdTP)
+        try:
+            result = client.futures_get_order(
+                symbol=pair,
+                orderId=orderIdTP)
 
-                avgPrice = result['avgPrice']
-                return avgPrice
+            avgPrice = result['avgPrice']
+            return avgPrice
 
-            except BinanceAPIException as e:
-                print(e.status_code)
-                print(e.message)
-                print("No order(s) found.")
+        except BinanceAPIException as e:
+            e1 = e.status_code
+            e2 = e.message
+            e3 = "Error: BinanceAPIException check_avgPrice"
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
+            print(error_info)
+            db.write_error(error_info)  
 
-            except BinanceOrderException as e:
-                print(e.status_code)
-                print(e.message)
-                print("check order2")
+        except BinanceOrderException as e:
+            e1 = e.status_code
+            e2 = e.message
+            e3 = "Error: BinanceOrderException check_avgPrice"
+            datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
+            print(error_info)
+            db.write_error(error_info)  
+
+
+# [
+#     {
+#         "clientOrderId": "testOrder",
+#         "cumQty": "0",
+#         "cumQuote": "0",
+#         "executedQty": "0",
+#         "orderId": 22542179,
+#         "avgPrice": "0.00000",
+#         "origQty": "10",
+#         "price": "0",
+#         "reduceOnly": false,
+#         "side": "BUY",
+#         "positionSide": "SHORT",
+#         "status": "NEW",
+#         "stopPrice": "9300",        // please ignore when order type is TRAILING_STOP_MARKET
+#         "symbol": "BTCUSDT",
+#         "timeInForce": "GTC",
+#         "type": "TRAILING_STOP_MARKET",
+#         "origType": "TRAILING_STOP_MARKET",
+#         "activatePrice": "9020",    // activation price, only return with TRAILING_STOP_MARKET order
+#         "priceRate": "0.3",         // callback rate, only return with TRAILING_STOP_MARKET order
+#         "updateTime": 1566818724722,
+#         "workingType": "CONTRACT_PRICE",
+#         "priceProtect": false            // if conditional order trigger is protected   
+#     },
+#     {
+#         "code": -2022, 
+#         "msg": "ReduceOnly Order is rejected."
+#     }
+# ]

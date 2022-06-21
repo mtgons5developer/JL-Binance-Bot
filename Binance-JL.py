@@ -3,6 +3,7 @@ import time
 import subprocess
 
 from binance.client import Client
+import urllib.request
 
 from TH import insert_TH
 import callDB
@@ -107,20 +108,35 @@ for x in result:
 # for x in result: print(x['status'])
 # quit()
 timer()
+external_ip = urllib.request.urlopen('https://ident.me').read().decode('utf8')
 
+# if external_ip == "209.35.171.236": 
+#     print("Connected")
+# else:
+#     print(external_ip)
+#     quit()
+passed = 0
 while True:
 
     second += 1
     
-    if minute == 0 and second == 1:
+    if minute == 0 and second <= 10:
         print("Main:", minute, second)
-        
+
+        # external_ip = urllib.request.urlopen('https://ident.me').read().decode('utf8')
+        # if external_ip == "209.35.171.236": # Add new IP Address here.
+
         print("Entry", minute)
         entry()
         th = datetime.strftime(datetime.now() - timedelta(1), '%Y-%m-%d')
         insert_TH(th) 
         timer()
         print("Exit", minute, second)
+        
+        # else:
+        #     print("Error: Your new IP Address is:", external_ip)
+        #     print("Please register the new IP Address to your Binance API Management.")
+        #     quit()
 
     if second >= 60:
         second = 0

@@ -33,8 +33,14 @@ class call:
             tp_sell = market_price - float(low)
             tp_sell = float(format(tp_sell).replace("-",""))
 
-            profit = 0.65
-            fee_range = 0.0025
+            stop_loss_activation = 0 # This will activate Stop Loss Function instead of Take Profit.
+
+            if stop_loss_activation == 1:
+                profit = 0.65
+                fee_range = 0.0025
+            else:
+                profit = 0.65
+                fee_range = 0.0025
 
             if side == "BUY":
 
@@ -42,8 +48,11 @@ class call:
                 tp_buy
                 tp_buy = (tp_buy * profit)
 
-                # take_profit = tp_buy + market_price
-                take_profit = abs(tp_buy - market_price)
+                if stop_loss_activation == 1: 
+                    take_profit = abs(tp_buy - market_price)
+                else:
+                    take_profit = tp_buy + market_price
+
                 fee = market_price * fee_range
 
                 if take_profit <= fee: # Resistance
@@ -58,8 +67,11 @@ class call:
                 side2 = "BUY"
                 tp_sell = (tp_sell * profit)
 
-                # take_profit = market_price - tp_sell
-                take_profit = market_price + tp_sell
+                if stop_loss_activation == 1: 
+                    take_profit = market_price + tp_sell
+                else:
+                    take_profit = market_price - tp_sell
+
                 fee = market_price * fee_range
 
                 if take_profit <= fee:
@@ -124,21 +136,12 @@ class call:
                 side=side,
                 type="MARKET",
                 quantity=qty,
-                recvWindow=15000)          
+                recvWindow=5000)          
 
             time.sleep(5)
             orderId = order["orderId"]
             market_price = self.check_avgPrice(orderId, pair)
             market_price = float(market_price)
-
-            username = db.get_user()["name"]
-            balance = round(float(client.futures_account()['totalWalletBalance']), 3)
-
-            print("\nOrderID: %(n)s \nMarket Price: %(c)s \nQuantity: %(f)s \nTime Frame: %(g)s \nBlance: %(h)s \nUsername: %(i)s" % 
-                {'n': orderId, 'c': market_price, 'f': qty, 'g': timeframe, 'h': balance, 'i': username})
-
-            db.put_orderID(pair, orderId, side, market_price, qty, timeframe, balance)            
-            db.put_homemsg(pair, timeframe, side, username)
 
             return orderId
 
@@ -273,7 +276,7 @@ class call:
             datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
             print(error_info)
-            db.write_error(error_info)  
+            db.write_error(error_info)
   
         except BinanceOrderException as e:
             e1 = e.status_code
@@ -282,7 +285,7 @@ class call:
             datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
             print(error_info)
-            db.write_error(error_info)  
+            db.write_error(error_info)
 
     def check_avgPrice(self, orderIdTP, pair):
 

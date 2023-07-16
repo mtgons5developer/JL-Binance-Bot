@@ -255,84 +255,84 @@ class PatternDetect:
         # https://gist.github.com/highfestiva/b71e76f51eed84d56c1be8ebbcc286b5?permalink_comment_id=3617078
         # https://binance-docs.github.io/apidocs/futures/en/#change-log
 
-        # yy = 5
-        # RSIT = "NONE"
-        # for y in df:
-        #     yy -= 1
-        #     n = df['RSIT'][rr - yy]
-        #     if n < 0:
-        #         RSIT = "SHORT"
-        #     else:
-        #         RSIT = "LONG"
+        yy = 5
+        RSIT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['RSIT'][rr - yy]
+            if n < 0:
+                RSIT = "SHORT"
+            else:
+                RSIT = "LONG"
 
-        #     if yy == 1: break
+            if yy == 1: break
 
-        # yy = 5
-        # fastdT = "NONE"
-        # for y in df:
-        #     yy -= 1
-        #     n = df['fastdT'][rr - yy]
-        #     if n < 0:
-        #         fastdT = "SHORT"
-        #     else:
-        #         fastdT = "LONG"
+        yy = 5
+        fastdT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['fastdT'][rr - yy]
+            if n < 0:
+                fastdT = "SHORT"
+            else:
+                fastdT = "LONG"
 
-        #     if yy == 1: break
+            if yy == 1: break
 
-        # yy = 5
-        # MACDT = "NONE"
-        # for y in df:
-        #     yy -= 1
-        #     n = df['MACDT'][rr - yy]
-        #     if n < 0:
-        #         MACDT = "SHORT"
-        #     else:
-        #         MACDT = "LONG"
+        yy = 5
+        MACDT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['MACDT'][rr - yy]
+            if n < 0:
+                MACDT = "SHORT"
+            else:
+                MACDT = "LONG"
 
-        #     if yy == 1: break
+            if yy == 1: break
 
-        # yy = 5
-        # SignalT = "NONE"
-        # for y in df:
-        #     yy -= 1
-        #     n = df['SignalT'][rr - yy]
-        #     if n < 0:
-        #         SignalT = "LONG"
-        #     else:
-        #         SignalT = "SHORT"
+        yy = 5
+        SignalT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['SignalT'][rr - yy]
+            if n < 0:
+                SignalT = "LONG"
+            else:
+                SignalT = "SHORT"
 
-        #     if yy == 1: break
+            if yy == 1: break
 
-        # yy = 5
-        # HistoryT = "NONE"
-        # for y in df:
-        #     yy -= 1
-        #     n = df['HistoryT'][rr - yy]
-        #     if n < 0:
-        #         HistoryT = "SHORT"
-        #     else:
-        #         HistoryT = "LONG"
+        yy = 5
+        HistoryT = "NONE"
+        for y in df:
+            yy -= 1
+            n = df['HistoryT'][rr - yy]
+            if n < 0:
+                HistoryT = "SHORT"
+            else:
+                HistoryT = "LONG"
 
-        #     if yy == 1: break
+            if yy == 1: break
 
-        # print(RSIT)
-        # print(fastdT)
-        # print(MACDT)
-        # print(SignalT)
-        # print(HistoryT)
-        # side = "NONE"
+        print(RSIT)
+        print(fastdT)
+        print(MACDT)
+        print(SignalT)
+        print(HistoryT)
+        side = "NONE"
 
-        # if RSIT == "LONG" and fastdT == "LONG" and MACDT == "LONG" and SignalT == "LONG" and HistoryT == "LONG":
-        #     print("======== B U Y =======")
-        #     side = "BUY"
-        # elif RSIT == "SHORT" and fastdT == "SHORT" and MACDT == "SHORT" and SignalT == "SHORT" and HistoryT == "SHORT":
-        #     print("======= S E L L =======")
-        #     side = "SELL"
+        if RSIT == "LONG" and fastdT == "LONG" and MACDT == "LONG" and SignalT == "LONG" and HistoryT == "LONG":
+            print("======== B U Y =======")
+            side = "BUY"
+        elif RSIT == "SHORT" and fastdT == "SHORT" and MACDT == "SHORT" and SignalT == "SHORT" and HistoryT == "SHORT":
+            print("======= S E L L =======")
+            side = "SELL"
         #dldl
 
         pp = df.tail(4)
         print(pp)
-        # print(side)
+        print("\n" + side)
         # val = pp['OpenT'].value_counts()
         # print(val[0:1]) #- Column
         # print(val[0:2]) #+ Column
@@ -348,7 +348,7 @@ if __name__ == '__main__':
     asyncio.get_event_loop().run_until_complete(pattern_detect.main())
     # print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-# schedule.every(timeframe).minutes.do(exit)
+# schedule.every(15).minutes.do(exit)
 
 # while True:
 #     schedule.run_pending()

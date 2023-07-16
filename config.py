@@ -1,6 +1,0 @@
-BINANCE_API_KEY  = "ta1LLA1Vwf2g05KbkJxeQsXhEk1htYGgeCzepe8WCj2QrNYcvMmFAbg4VkGCcKTE"
-BINANCE_SECRET_KEY  = "AS1hXem24pRMvP5suOS6F3g7D0cgYVRIZOPRzKe0M8NnQufYfWn3GjXaHv5fjjLh"
-HOST = "sql592.main-hosting.eu"
-DATABASE="u364843514_school_app"
-USER="u364843514_school_app"
-PASSWORD="TheTicketTree!!1234A@$"

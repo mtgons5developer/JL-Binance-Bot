@@ -38,7 +38,7 @@ class PatternDetect:
     async def main(self):
         global pair, timeframe, error_set, deltaSMA
         
-        timeframe = "1h"
+        timeframe = "15m"
         pair = "BTCUSDT"
             
         try:                  
@@ -101,23 +101,6 @@ class PatternDetect:
 
 #=====================================================================================================================
 
-    def get_data_frame_1m(self, symbol, msg):
-        global dd
-
-        dd = pd.DataFrame(msg)
-        dd.columns = ['Time','Open', 'High', 'Low', 'Close', 'Volume','CloseTime', 'qav','num_trades','taker_base_vol', 'taker_quote_vol', 'ignore']
-        dd = dd.loc[:, ['Close', "Time"]]
-        dd["Time"] = pd.to_datetime(dd["Time"], unit='ms')
-
-        RSI = talib.RSI(dd['Close'], timeperiod=14)
-        fastk, fastd = talib.STOCHRSI(dd['Close'], timeperiod=14, fastk_period=5, fastd_period=3, fastd_matype=0)
-
-        dd['RSI'] = round(RSI)
-        dd['fastd'] = round(fastd) # red
-        dd['fastk'] = round(fastk) # white
-
-#=====================================================================================================================
-
     def get_data_frame(self, symbol, msg):
         global rows_count, df, volume, high, close
 
@@ -133,79 +116,6 @@ class PatternDetect:
 
         return df
     
-    def get_data_frame_fab(self, symbol, msg):
-        global rows_count, df, volume, high, close
-
-        df = pd.DataFrame(msg)
-        df.columns = ['Time','Open', 'High', 'Low', 'Close', 'Volume','CloseTime', 'qav','num_trades','taker_base_vol', 'taker_quote_vol', 'ignore']
-        df = df.loc[:, ['Time','Open', 'High', 'Low', 'Close', 'Volume']]
-        times = pd.to_datetime(df["Time"], unit='ms')
-        times_index = pd.Index(times)
-        times_index_Singapore = times_index.tz_localize('GMT').tz_convert('Singapore')
-
-        # Handle NaN values in the DataFrame
-        df = df.replace([np.inf, -np.inf], np.nan).dropna()
-
-        df["Date"] = times_index_Singapore
-        df["Open"] = df["Open"].astype(float)
-        df["High"] = df["High"].astype(float)
-        df["Low"] = df["Low"].astype(float)
-        df["Close"] = df["Close"].astype(float)
-        df["Volume"] = df["Volume"].astype(float)
-
-        df = df.set_index('Date',drop = False)
-        date1 = "2022-06-25 04:00:00"
-        date2 = "2022-06-26 20:00:00"
-
-        max = df['Close'][date1:date2].max()
-        min = df['Close'][date1:date2].min()
-        df1 = df[date1:date2]
-        diff1 = round(max - min)
-        print("\n", max, min, diff1)
-        d = diff1 / 2
-
-        with open('output.txt', 'w') as f:
-            f.write(
-                df1.to_string()
-            )
-
-        low = df1['Low'][date1:date2].min()
-        high = df1['High'][date1:date2].min()
-        diff = round(float(high - low))
-        print(high, low, diff)
-
-        level1 = round(float(high - 0.236 * diff))
-        level2 = round(float(high - 0.382 * diff))
-        level3 = round(float(high - 0.618 * diff))
-
-        print ("Level", " ", "PRICE")
-        print ("0 ", "      " , high)
-        print ("0.236", "   " ,level1)
-        print ("0.382",  "   ",level2)
-        print ("0.618","   ",  level3)
-        print ("1 ",   "      ", low)
-
-        # fig, ax = plt.subplots(figsize=(15,5))
-
-        # ax.plot(df1.Date, df1.Close)
-
-        # ax.axhspan(level1, min + d, alpha=0.4, facecolor='lightsalmon')
-        # ax.axhspan(level2, level1, alpha=0.5, color='palegoldenrod')
-        # ax.axhspan(level3, level2, alpha=0.5, color='palegreen')
-        # ax.axhspan(max, max - d, alpha=0.5, color='powderblue')
-
-        # plt.ylabel("Closing Price per 1 Hour")
-        # plt.xlabel("2022 June")
-
-        # plt.title('Fibonacci')
-        # ax.grid()
-        # plt.show()
-        
-        # quit()
-
-        return df
-    
-
 #=====================================================================================================================
 
     def Pattern_Detect(self):
@@ -376,26 +286,50 @@ class PatternDetect:
             connection.close()
 
         except (Exception, psycopg2.Error) as error:
-            print("Error inserting data:", error)
+            # print("Error inserting data:", error)
+            pass
         finally:
             print('Data inserted successfully!')
+
+# if __name__ == '__main__':
+#     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+#     pattern_detect = PatternDetect()
+
+#     while True:
+#         try:
+#             # Run the main method to gather data
+#             asyncio.get_event_loop().run_until_complete(pattern_detect.main())
+
+#             # Insert the data to the database
+#             pattern_detect.insert_pp_to_database()
+
+#         except Exception as e:
+#             print("Error:", str(e))
+
+#         # Sleep for 15 minutes before running again
+#         time.sleep(60)
+# Schedule the task to run every 15 minutes
+
+def run_every_15_minutes():
+    try:
+        # Run the main method to gather data
+        asyncio.get_event_loop().run_until_complete(pattern_detect.main())
+
+        # Insert the data to the database
+        pattern_detect.insert_pp_to_database()
+
+    except Exception as e:
+        print("Error:", str(e))
+
+schedule.every(15).minutes.do(run_every_15_minutes)
 
 if __name__ == '__main__':
     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     pattern_detect = PatternDetect()
-    asyncio.get_event_loop().run_until_complete(pattern_detect.main())
-    # print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    
-    # Call the insert_pp_to_database method
-    pattern_detect.insert_pp_to_database()
 
-# schedule.every(15).minutes.do(exit)
+    while True:
+        # Run the scheduled tasks
+        schedule.run_pending()
 
-# while True:
-#     schedule.run_pending()
-#     time.sleep(1)
-
-# pattern_detect = PatternDetect()
-
-# for _ in range(20):
-#     asyncio.get_event_loop().run_until_complete(pattern_detect.main())
+        # Sleep for 1 second before checking the schedule again
+        time.sleep(1)

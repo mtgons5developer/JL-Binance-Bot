@@ -9,8 +9,10 @@ import pandas as pd
 import numpy as np
 
 from binance.client import AsyncClient
+from binance.exceptions import BinanceAPIException, BinanceOrderException
 
-from TH import insert_TH
+from Monitor import mainn
+
 import config
 import callDB
 import CO
@@ -40,16 +42,17 @@ class PatternDetect:
             # BTCUSDT, ETHUSDT, BNBUSDT, XRPUSDT, SOLUSDT, ADAUSDT, LTCUSDT, TRXUSDT
             # DOGEUSDT, AVAXUSDT, DOTUSDT, MATICUSDT, BCHUSDT, EOSUSDT
         
-            if pair == "ETHUSDT":
+            if pair == "BTCUSDT":
                 found = 1
                 break  
 
         if found == 1:
-            
+            timeframe = "1m"
+            deltaSMA = 20
             try:
                 client = await AsyncClient.create(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
 
-                if timeframe == "1h": deltaSMA = 60
+                if timeframe == "1h": deltaSMA = 800
                 if timeframe == "2h": deltaSMA = 80
                 if timeframe == "4h": deltaSMA = 140
                 if timeframe == "6h": deltaSMA = 200                        
@@ -57,16 +60,57 @@ class PatternDetect:
                 if timeframe == "12h": deltaSMA = 500
                 if timeframe == "1d": deltaSMA = 1000
 
-                last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
-                get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+                # last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
+                # get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
 
-                msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
-                data = self.get_data_frame(symbol=pair, msg=msg) 
-                self.Pattern_Detect()                 
-                print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')                       
+                # msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
+                # data = self.get_data_frame(symbol=pair, msg=msg) 
+                # self.Pattern_Detect()                 
+                # print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')                       
                 date_1m = datetime.today().strftime('%Y-%m-%d')
+                # print(date_1m)
+                entry = 0
+                take_profit = 19200
+                while True:
 
-                CreateOrder.futures_order_main(pair, qty, side, timeframe, high, low)
+                    mainn()
+
+                    # try:
+                    #     msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=date_1m, end_str=None)
+                    #     data = self.get_data_frame_1m(symbol=pair, msg=msg) 
+                    #     entry = self.entry()
+                    #     if entry == 1: break
+                    #     time.sleep(1)
+
+                    # except:
+                    #     print("Error: Automatic Entry Initiated.")
+                    #     break
+
+                    # except BinanceAPIException as e:
+                    #     e1 = e.status_code
+                    #     e2 = e.message
+                    #     e3 = "Error: BinanceAPIException while True"
+                    #     datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    #     error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
+                    #     print(error_info)
+                    #     db.write_error(error_info)  
+                    #     break
+
+                    # except BinanceOrderException as e:
+                    #     e1 = e.status_code
+                    #     e2 = e.message
+                    #     e3 = "Error: BinanceOrderException while True"
+                    #     datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    #     error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
+                    #     print(error_info)
+                    #     db.write_error(error_info)  
+                    #     break
+
+                print("DONE")
+                quit()
+                orderId = CreateOrder.futures_order_main(pair, qty, side, timeframe, high, low)
+
+                # CreateOrder.futures_order_main(pair, qty, side, timeframe, high, low)
                 await client.close_connection()
 
             except: await client.close_connection()
@@ -125,7 +169,7 @@ class PatternDetect:
         df['BOP'] = round(BOP, 2)
         dd['fastd'] = round(fastd) # red
         dd['fastk'] = round(fastk) # white
-
+        print(dd)
         d30 = df.tail(30)
         for i in range(2,d30.shape[0]):
             
@@ -187,6 +231,7 @@ class PatternDetect:
             
             df.loc[idx,'BearS'] = current['High'] < prev['High'] and prev['High'] > prev_2['High'] #Bearish Swing
             df.loc[idx,'BearPB'] = realbody <= candle_range/3 and max(current['Open'] , current['Close']) < (current['High'] + current['Low'])/2 and current['High'] > prev['High'] # Bearish pin bar
+            
             df.loc[idx,'BearE'] = current['High'] > prev['High'] and current['Low'] < prev['Low'] and realbody >= 0.8 * candle_range and current['Close'] < current['Open'] # Bearish engulfing
             # If current candle shows position exit or stay next position.
 

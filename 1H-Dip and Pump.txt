@@ -1,0 +1,69 @@
+                        #   Time     Open     High      Low    Close   BOP   RSI  fastd  fastk
+        # 67 2022-05-17 05:00:00  30365.1  30519.3  30260.2  30445.6  0.31  58.0  100.0  100.0
+        # 68 2022-05-17 06:00:00  30445.6  30539.0  30335.0  30514.5  0.34  59.0  100.0  100.0
+        # 69 2022-05-17 07:00:00  30514.5  30576.4  30335.0  30394.3 -0.50  56.0   67.0    0.0 SHORT
+
+        if BOP2 > BOP3 and RSI2 == RSI3 and RSI2 > 55 and fastd2 == fastd3 and fastd2 == 100 and fastk2 == fastk3 and fastk2 == 100:
+            side = "SELL"
+            print("1")
+        elif BOP2 > BOP3 and RSI2 > RSI3 and RSI2 > 55 and fastd2 == fastd3 and fastd2 == 100 and fastk2 == fastk3 and fastk2 == 100:
+            side = "SELL"   
+            print("2")
+                        #   Time     Open     High      Low    Close   BOP   RSI  fastd  fastk            
+        # 70 2022-05-17 08:00:00  30394.2  30794.0  30375.0  30559.9  0.40  59.0   67.0  100.0
+        # 71 2022-05-17 09:00:00  30560.0  30717.3  30550.0  30625.0  0.39  60.0   67.0  100.0
+        # 72 2022-05-17 10:00:00  30625.0  30641.6  30429.7  30440.0 -0.87  56.0   67.0    0.0 SHORT
+        #                  
+        elif BOP2 < BOP3 and RSI2 == RSI3 and RSI2 > 55 and fastd2 == fastd3 and fastd2 > 60 and fastk2 == fastk3 and fastk2 == 100:
+            side = "SELL"   
+            print("3")     
+        elif BOP2 < BOP3 and RSI2 > RSI3 and RSI2 > 55 and fastd2 == fastd3 and fastd2 > 60 and fastk2 == fastk3 and fastk2 == 100:
+            side = "SELL"        
+            print("4")
+                        #   Time     Open     High      Low    Close   BOP   RSI  fastd  fastk            
+        # 42 2022-05-16 04:00:00  30314.9  30436.9  30105.0  30313.9 -0.00  50.0    0.0    0.0
+        # 43 2022-05-16 05:00:00  30313.4  30461.3  30233.0  30280.0 -0.15  49.0    0.0    0.0 
+        # 44 2022-05-16 06:00:00  30279.9  30280.0  29361.1  29557.4 -0.79  38.0    0.0    0.0 SHORT
+
+        elif BOP2 < BOP3 and RSI2 == RSI3 and RSI2 < 50 and fastd2 == fastd3 and fastd2 < 10 and fastk2 == fastk3 and fastk2 < 10:
+            side = "SELL" 
+            print("5")       
+        elif BOP2 < BOP3 and RSI2 < RSI3 and RSI2 < 50 and fastd2 == fastd3 and fastd2 < 10 and fastk2 == fastk3 and fastk2 < 10:
+            side = "SELL"   
+            print("6")
+                        #   Time     Open     High      Low    Close   BOP   RSI  fastd  fastk            
+        # 38 2022-05-15 23:00:00  31087.7  31422.6  31035.9  31324.4  0.61  72.0  100.0  100.0
+        # 39 2022-05-16 00:00:00  31324.3  31327.4  31040.0  31105.0 -0.76  66.0   67.0    0.0
+        # 40 2022-05-16 01:00:00  31105.0  31152.0  30678.1  30768.6 -0.71  58.0   33.0    0.0 SHORT
+
+        elif BOP2 < 0 and BOP2 < BOP3 and RSI2 < RSI3 and RSI2 < 70 and fastd2 < fastd3 and fastk2 < fastk3:
+            side = "SELL"
+            print("7")
+                        #   Time     Open     High      Low    Close   BOP   RSI  fastd  fastk            
+        # 89 2022-05-18 03:00:00  30204.8  30205.4  29700.0  29815.2 -0.77  42.0    8.0    0.0
+        # 90 2022-05-18 04:00:00  29815.3  29913.0  29740.0  29809.5 -0.03  42.0    8.0    0.0
+        # 91 2022-05-18 05:00:00  29809.5  30021.0  29779.7  30002.2  0.80  47.0   20.0   61.0 LONG  
+        #   
+        elif BOP2 > BOP3 and RSI2 == RSI3 and RSI2 < 50 and fastd2 == fastd3 and fastd2 < 10 and fastk2 == fastk3 and fastk2 < 10:
+            side = "BUY"
+            print("8")
+                        #   Time     Open     High      Low    Close   BOP   RSI  fastd  fastk
+        # 44 2022-05-16 08:00:00  29572.7  29900.0  29554.4  29782.0  0.61  43.0   14.0   38.0
+        # 45 2022-05-16 09:00:00  29782.0  29782.1  29449.3  29595.7 -0.56  40.0   19.0   17.0
+
+        # 46 2022-05-16 10:00:00  29595.7  30196.1  29417.3  30161.8  0.73  51.0   52.0  100.0 LONG
+        elif BOP2 < BOP3 and RSI2 < RSI3 and RSI2 < 45 and fastd2 > fastd3 and fastk2 < fastk3 and fastd2 < 20 and fastk2 < 20:
+            side = "BUY"
+            print("9")
+
+
+                  Time     Open     High      Low    Close      Volume  BOP   RSI  fastd  fastk   MACD  Signal  History  BOPT  RSIT  fastdT  fastkT  MACDT  SignalT  HistoryT
+31 2022-05-11 00:00:00  31002.1  31908.8  30612.2  31419.7  124639.176  0.3  31.0   94.0  100.0  -747.0 -1025.0    278.0    
+32 2022-05-11 06:00:00  31419.7  32197.6  30188.0  31517.1  214041.517  0.0  32.0   95.0  100.0  -564.0  -971.0    408.0    
+33 2022-05-11 12:00:00  31517.1  32067.9  29000.0  29899.9  486719.055 -0.5  26.0   67.0    0.0  -952.0  -969.0     17.0    
+34 2022-05-11 18:00:00  29900.0  30250.0  27651.0  29074.7  276476.224 -0.3  24.0   33.0    0.0 -1286.0 -1006.0   -280.0    
+
+28 2022-05-18 12:00:00  29818.1  29890.0  28726.7  28974.2  177546.315 -0.7  ...     1     1       1       1      1        1         1
+29 2022-05-18 18:00:00  28974.2  29534.4  28629.6  28700.6  101386.441 -0.3  ...    -1     1       1       1      1        1         1
+30 2022-05-19 00:00:00  28700.6  29339.5  28670.5  29052.4   77070.130  0.5  ...    -1    -1      -1      -1      1        1        -1
+31 2022-05-19 06:00:00  29052.4  29438.0  29049.4  29119.5   32176.961  0.2  ...    -1    -1      -1      -1     -1        1        -1

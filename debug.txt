@@ -1,0 +1,13 @@
+2022-06-19 06:09:43
+e.status_code
+e.message
+Error: BinanceAPIException futures_order
+2022-06-19 06:09:46
+e.status_code
+e.message
+Error: BinanceAPIException futures_order
+
+2022-06-19 06:09:57
+e.status_code
+e.message
+Error: BinanceAPIException futures_order

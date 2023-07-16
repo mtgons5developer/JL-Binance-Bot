@@ -28,85 +28,90 @@ class PatternDetect:
 
     async def main(self):
         global pair, timeframe, error_set, deltaSMA
-        
-        result = db.get_toggle()
 
-        yy = 0
-        for y in result:
-            yy += 1
+        # result = db.get_toggle()
 
-        xx = 0
-        for x in result:
-            xx += 1
-            pair = x['pair']
-            timeframe = x['timeframe']
-            qty = x['qty']
-            volume_set = x['vol']
-            order_type = x['order_type']
+        # yy = 0
+        # for y in result:
+        #     yy += 1
 
-            # BTCUSDT, ETHUSDT, BNBUSDT, XRPUSDT, SOLUSDT, LUNAUSDT, ADAUSDT, USTUSDT, BUSDUSDT, 
-            # DOGEUSDT, AVAXUSDT, DOTUSDT, SHIBUSDT, WBTCUSDT, DAIUSDT, MATICUSDT
-            # Short        19    61240    <c>+123399   </c>-<c>   +14403% </c>
-            # Short        7    3425    <c>+7399   </c>-<c>   +1403% </c>
-            # Long        125    17650    <c>+58723   </c>-<c>   +4283% </c>
-            if pair == "BTCUSDT":
-                # pair = "MKRUSDT"
-                # timeframe = "1d"
-                try:                    
-                    client = await AsyncClient.create(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
+        # xx = 0
+        # for x in result:
+        #     xx += 1
+        #     pair = x['pair']
+        #     timeframe = x['timeframe']
+        #     qty = x['qty']
+        #     volume_set = x['vol']
+        #     order_type = x['order_type']
 
-                    if timeframe == "1m": deltaSMA = 10
-                    if timeframe == "3m": deltaSMA = 20
-                    if timeframe == "5m": deltaSMA = 20
-                    if timeframe == "15m": deltaSMA = 16
-                    if timeframe == "30m": deltaSMA = 24
-                    if timeframe == "1h": deltaSMA = 200
-                    if timeframe == "2h": deltaSMA = 80
-                    if timeframe == "4h": deltaSMA = 140
-                    if timeframe == "6h": deltaSMA = 200                        
-                    if timeframe == "8h": deltaSMA = 300                        
-                    if timeframe == "12h": deltaSMA = 500
-                    if timeframe == "1d": deltaSMA = 2000
-                        
-                    last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
-                    get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+        # timeframe = "1h"
+        pair = "BTCUSDT"
+        # qty = "0.08"
 
-                    msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
-                    data = self.get_data_frame(symbol=pair, msg=msg) 
-                    self.Pattern_Detect()                 
-                    print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')                       
-                    # print(deltaSMA)
+        # BTCUSDT, ETHUSDT, BNBUSDT, XRPUSDT, SOLUSDT, LUNAUSDT, ADAUSDT, USTUSDT, BUSDUSDT, 
+        # DOGEUSDT, AVAXUSDT, DOTUSDT, SHIBUSDT, WBTCUSDT, DAIUSDT, MATICUSDT
+        # Short        19    61240    <c>+123399   </c>-<c>   +14403% </c>
+        # Short        7    3425    <c>+7399   </c>-<c>   +1403% </c>
+        # Long        125    17650    <c>+58723   </c>-<c>   +4283% </c>
 
-                    # await client.close_connection()
-                    # while 1 == 1:
-                    #     try:
-                    #         last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
-                    #         get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+        if pair == "BTCUSDT":
+            # pair = "BTCUSDT"
+            timeframe = "15m"
+            try:                    
+                client = await AsyncClient.create(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
 
-                    #         msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
-                    #         data = self.get_data_frame(symbol=pair, msg=msg) 
-                    #         print(data)
-
-                            # rr = len(dd.index)
-                            # RSI = dd['RSI'][rr - 1]
-                            # STOCHRSI_1 = dd['fastd'][rr - 1]
-                            # STOCHRSI_2 = dd['fastk'][rr - 1]
-                            # print(RSI, STOCHRSI_1, STOCHRSI_2)
-
-                            # time.sleep(1)
-                    #     except:
-                    #         print("Error:")
-                    #         break
-
-                    # await client.close_connection()
-                    # quit()
-
-                    # CreateOrder.futures_order(pair, qty, side, order_type, take_profit, timeframe)
-                    # print('------------futures_order------------')
+                if timeframe == "1m": deltaSMA = 10
+                if timeframe == "3m": deltaSMA = 20
+                if timeframe == "5m": deltaSMA = 20
+                if timeframe == "15m": deltaSMA = 16
+                if timeframe == "30m": deltaSMA = 24
+                if timeframe == "1h": deltaSMA = 200
+                if timeframe == "2h": deltaSMA = 80
+                if timeframe == "4h": deltaSMA = 140
+                if timeframe == "6h": deltaSMA = 200                        
+                if timeframe == "8h": deltaSMA = 300                        
+                if timeframe == "12h": deltaSMA = 500
+                if timeframe == "1d": deltaSMA = 2000
                     
-                    await client.close_connection()
+                last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
+                get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
 
-                except: await client.close_connection()     
+                msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
+                data = self.get_data_frame(symbol=pair, msg=msg) 
+                self.Pattern_Detect()                 
+                print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')                       
+                print(deltaSMA)
+
+                # await client.close_connection()
+                while 1 == 1:
+                    try:
+                        last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
+                        get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+
+                        msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
+                        data = self.get_data_frame(symbol=pair, msg=msg) 
+                        print(data)
+
+                        rr = len(dd.index)
+                        RSI = dd['RSI'][rr - 1]
+                        STOCHRSI_1 = dd['fastd'][rr - 1]
+                        STOCHRSI_2 = dd['fastk'][rr - 1]
+                        print(RSI, STOCHRSI_1, STOCHRSI_2)
+
+                        time.sleep(1)
+                    except:
+                        print("Error:")
+                        break
+
+                await client.close_connection()
+                # quit()
+
+                # CreateOrder.futures_order(pair, qty, side, order_type, take_profit, timeframe)
+                # print('------------futures_order------------')
+                
+                await client.close_connection()
+
+            except: await client.close_connection()     
 
 #=====================================================================================================================
 

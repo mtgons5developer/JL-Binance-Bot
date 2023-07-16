@@ -1,7 +1,8 @@
 
 from datetime import datetime, timedelta
 import schedule
-import time
+# import datetime
+# import time
 
 import talib
 import asyncio
@@ -30,9 +31,13 @@ class PatternDetect:
         xx = 0
         for x in result:
             xx += 1
-            pair = x['pair']
-            timeframe = x['timeframe']
+            
+            # pair = x['pair']
+            # timeframe = x['timeframe']
+            timeframe = "1h"
+
             qty = x['qty']
+            qty = "0.08"
             tf = int(timeframe[:-1])
             tf = tf * 60
             tf = tf - 1
@@ -57,8 +62,8 @@ class PatternDetect:
                 if timeframe == "12h": deltaSMA = 500
                 if timeframe == "1d": deltaSMA = 1000
 
-                last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
-                get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+                current_datetime = datetime.now() - timedelta(hours = deltaSMA)
+                get_startDate = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
 
                 msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
                 data = self.get_data_frame(symbol=pair, msg=msg) 

@@ -33,7 +33,11 @@ class call:
             tp_sell = market_price - float(low)
             tp_sell = float(format(tp_sell).replace("-",""))
 
-            stop_loss_activation = 0 # This will activate Stop Loss Function instead of Take Profit.
+            stop_loss_activation = 0 
+            # This will activate Stop Loss Function instead of Take Profit.
+            # Future upgrade.
+            # A Stop Loss will be created after an Order. Take Profit will be the same but will not be created on this feature but instead if 
+            # if Market Price went above TP a SL will be created. It will only stop until SL has been triggered.
 
             if stop_loss_activation == 1:
                 profit = 0.65
@@ -55,7 +59,7 @@ class call:
 
                 fee = market_price * fee_range
 
-                if take_profit <= fee: # Resistance
+                if take_profit <= fee:
                     take_profit = fee
 
                 deci = self.get_quantity_precision(pair)
@@ -103,8 +107,8 @@ class call:
             print("\nOrderID: %(n)s \nOrderIdTP: %(b)s \nMarket Price: %(c)s \nStop Loss: %(e)s \nQuantity: %(f)s \nTime Frame: %(g)s \nBlance: %(h)s \nUsername: %(i)s" % 
                 {'n': orderId, 'b': orderIdTP, 'c': market_price, 'e': take_profit, 'f': qty, 'g': timeframe, 'h': balance, 'i': username})
                
-            db.put_orderID(pair, orderId, side, market_price, qty, take_profit, orderIdTP, timeframe, balance)               
-            db.put_homemsg(pair, timeframe, side, username)
+            # db.put_orderID(pair, orderId, side, market_price, qty, take_profit, orderIdTP, timeframe, balance)               
+            # db.put_homemsg(pair, timeframe, side, username)
 
 
         except BinanceAPIException as e:
@@ -115,7 +119,7 @@ class call:
             datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
             print(error_info)
-            db.write_error(error_info)         
+            # db.write_error(error_info)         
 
         except BinanceOrderException as e:
 
@@ -125,7 +129,7 @@ class call:
             datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
             print(error_info)
-            db.write_error(error_info)     
+            # db.write_error(error_info)     
 
 
     def futures_order(self, pair, qty, side, timeframe):
@@ -152,7 +156,7 @@ class call:
             datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
             print(error_info)
-            db.write_error(error_info)     
+            # db.write_error(error_info)     
 
         except BinanceOrderException as e:
             e1 = e.status_code
@@ -161,7 +165,7 @@ class call:
             datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
             print(error_info)
-            db.write_error(error_info)    
+            # db.write_error(error_info)    
 
     def get_quantity_precision(self, pair):    
 
@@ -180,7 +184,7 @@ class call:
             datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
             print(error_info)
-            db.write_error(error_info)    
+            # db.write_error(error_info)    
   
         except BinanceOrderException as e:
             e1 = e.status_code
@@ -189,7 +193,7 @@ class call:
             datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
             print(error_info)
-            db.write_error(error_info)   
+            # db.write_error(error_info)   
 
     def check_order(self, orderIdTP, pair):
 
@@ -208,7 +212,7 @@ class call:
             datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
             print(error_info)
-            db.write_error(error_info)  
+            # db.write_error(error_info)  
   
         except BinanceOrderException as e:
             e1 = e.status_code
@@ -217,7 +221,7 @@ class call:
             datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
             print(error_info)
-            db.write_error(error_info)  
+            # db.write_error(error_info)  
 
         # ===========================================================================================
 
@@ -246,7 +250,7 @@ class call:
             datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
             print(error_info)
-            db.write_error(error_info)  
+            # db.write_error(error_info)  
   
         except BinanceOrderException as e:
             e1 = e.status_code
@@ -255,7 +259,7 @@ class call:
             datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
             print(error_info)
-            db.write_error(error_info)  
+            # db.write_error(error_info)  
 
         # ===========================================================================================
         
@@ -276,7 +280,7 @@ class call:
             datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
             print(error_info)
-            db.write_error(error_info)
+            # db.write_error(error_info)
   
         except BinanceOrderException as e:
             e1 = e.status_code
@@ -285,7 +289,7 @@ class call:
             datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
             print(error_info)
-            db.write_error(error_info)
+            # db.write_error(error_info)
 
     def check_avgPrice(self, orderIdTP, pair):
 
@@ -304,7 +308,7 @@ class call:
             datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
             print(error_info)
-            db.write_error(error_info)  
+            # db.write_error(error_info)  
 
         except BinanceOrderException as e:
             e1 = e.status_code
@@ -313,7 +317,7 @@ class call:
             datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             error_info = "\n" + datetime + "\n" + e1 + "\n" + e2 + "\n" + e3 + "\n"
             print(error_info)
-            db.write_error(error_info)  
+            # db.write_error(error_info)  
 
 
 # [

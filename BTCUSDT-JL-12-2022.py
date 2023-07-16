@@ -1,4 +1,7 @@
+
 from datetime import datetime, timedelta
+import schedule
+import time
 
 import talib
 import asyncio
@@ -7,44 +10,135 @@ import numpy as np
 
 from binance.client import AsyncClient
 
+from TH import insert_TH
 import config
+import callDB
+import CO
 
-
+db = callDB.call()
+CreateOrder = CO.call()
 
 class PatternDetect:
 
 #=====================================================================================================================
 
     async def main(self):
-        global timeframe
+        global pair, timeframe, orderId, qty, tf
 
+        timeframe = "1h"
+        pair = "BTCUSDT"
+        qty = "0.08"
+        # tf = int(timeframe[:-1])
+        # tf = tf * 60
+        tf = 1 #tf - 1
+        print("Timeframe:",tf)
+            
         try:
-            timeframe = "1h"
-            deltaSMA = 800
-            pair = "BTCUSDT"
             client = await AsyncClient.create(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
+
+            if timeframe == "5m": deltaSMA = 20
+            if timeframe == "1h": deltaSMA = 60
+            if timeframe == "2h": deltaSMA = 80
+            if timeframe == "4h": deltaSMA = 140
+            if timeframe == "6h": deltaSMA = 200                        
+            if timeframe == "8h": deltaSMA = 300                        
+            if timeframe == "12h": deltaSMA = 500
+            if timeframe == "1d": deltaSMA = 1000
+
             last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
-            get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+            get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')         
+            print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')                       
+
             msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
             data = self.get_data_frame(symbol=pair, msg=msg) 
-            self.Pattern_Detect()                 
-            await client.close_connection()
+            self.Pattern_Detect()
 
-        except: await client.close_connection()    
+            # CreateOrder.futures_order_main(pair, qty, side, timeframe, high, low)
+            await client.close_connection()
+            quit()
+
+        except: await client.close_connection()
+#=====================================================================================================================
+
+    def entry(self):
+
+        rr = len(dd.index)
+        RSI = dd['RSI'][rr - 1]
+        BOP = dd['RSI'][rr - 1] # BOP get 30 frames Average or negative and positive
+        STOCHRSI_1 = dd['fastd'][rr - 1]
+        STOCHRSI_2 = dd['fastk'][rr - 1]
+
+        print(RSI, BOP, STOCHRSI_1, STOCHRSI_2, side)
+
+        if RSI >= 60 and side == "SELL":
+            print(RSI, BOP, STOCHRSI_1, STOCHRSI_2, side, "1")
+            entry = 1
+            return entry
+
+        if STOCHRSI_1 >= 85 and RSI >= 60 and side == "SELL":
+            print(RSI, BOP, STOCHRSI_1, STOCHRSI_2, side, "2")
+            entry = 1
+            return entry
+        if STOCHRSI_2 >= 85 and RSI >= 60 and side == "SELL":
+            print(RSI, BOP, STOCHRSI_1, STOCHRSI_2, side, "3")
+            entry = 1
+            return entry
+
+        if RSI <= 20 and RSI >= 0 and side == "BUY":
+            print(RSI, BOP, STOCHRSI_1, STOCHRSI_2, side, "4")
+            entry = 1
+            return entry
+        if STOCHRSI_1 <= 20 and side == "BUY":
+            print(RSI, BOP, STOCHRSI_1, STOCHRSI_2, side, "5")
+            entry = 1
+            return entry
+        if STOCHRSI_2 <= 20 and side == "BUY":
+            print(RSI, BOP, STOCHRSI_1, STOCHRSI_2, side, "6")
+            entry = 1
+            return entry
+
+    def get_data_frame_1m(self, symbol, msg):
+        global dd
+
+        dd = pd.DataFrame(msg)
+        dd.columns = ['Time','Open', 'High', 'Low', 'Close', 'Volume','CloseTime', 'qav','num_trades','taker_base_vol', 'taker_quote_vol', 'ignore']
+        dd = dd.loc[:, ['Close', "Time"]]
+        dd["Time"] = pd.to_datetime(dd["Time"], unit='ms')
+
+        RSI = talib.RSI(dd['Close'], timeperiod=14)
+        BOP = talib.BOP(df['Open'], df['High'], df['Low'], df['Close'])
+        fastk, fastd = talib.STOCHRSI(dd['Close'], timeperiod=14, fastk_period=5, fastd_period=3, fastd_matype=0)
+
+        dd['RSI'] = round(RSI)
+        df['BOP'] = round(BOP, 2)
+        dd['fastd'] = round(fastd) # red
+        dd['fastk'] = round(fastk) # white
+
+        d30 = df.tail(30)
+        for i in range(2,d30.shape[0]):
+            
+            current = df.iloc[i,:]
+            idx = df.index[i]
 
     def get_data_frame(self, symbol, msg):
-        global rows_count, df, volume, high, close, prev_side
+        global df
 
         df = pd.DataFrame(msg)
         df.columns = ['Time','Open', 'High', 'Low', 'Close', 'Volume','CloseTime', 'qav','num_trades','taker_base_vol', 'taker_quote_vol', 'ignore']
         df = df.loc[:, ['Time','Open', 'High', 'Low', 'Close', 'Volume']]
         df["Time"] = pd.to_datetime(df["Time"], unit='ms')
-
         df["Open"] = df["Open"].astype(float)
         df["High"] = df["High"].astype(float)
         df["Low"] = df["Low"].astype(float)
         df["Close"] = df["Close"].astype(float)
         df["Volume"] = df["Volume"].astype(float)
+
+        return df
+
+#=====================================================================================================================
+
+    def Pattern_Detect(self):
+        global high, close, low, side
 
         RSI = talib.RSI(df['Close'], timeperiod=14)
         BOP = talib.BOP(df['Open'], df['High'], df['Low'], df['Close'])
@@ -52,7 +146,6 @@ class PatternDetect:
         EMA = talib.EMA(df['Close'], timeperiod=30)
         WMA = talib.WMA(df['Close'], timeperiod=30)
 
-        macd, macdsignal, macdhist = talib.MACD(df['Close'], fastperiod=3, slowperiod=10, signalperiod=16) #HIGH TF
         fastk, fastd = talib.STOCHRSI(df['Close'], timeperiod=14, fastk_period=5, fastd_period=3, fastd_matype=0)
 
         df['CDLSS'] = round(CDLSS)
@@ -62,18 +155,14 @@ class PatternDetect:
         df['RSI'] = round(RSI)
         df['fastd'] = round(fastd)
         df['fastk'] = round(fastk)
-        # df['MACD'] = round(macd)
-        # df['Signal'] = round(macdsignal)
-        # df['History'] = round(macdhist)   
-        
-        for i in range(2,df.shape[0]):
 
+        for i in range(2,df.shape[0]):
+            
             current = df.iloc[i,:]
             prev = df.iloc[i-1,:]
             prev_2 = df.iloc[i-2,:]
             realbody = abs(current['Open'] - current['Close'])
             candle_range = current['High'] - current['Low']
-            sum =  prev["Close"] - current["Close"]
             idx = df.index[i]
 
             df.loc[idx,'EMA--'] = current["EMA"] >= prev["EMA"]
@@ -95,65 +184,15 @@ class PatternDetect:
 
             df.loc[idx,'SUM'] = abs(prev["Close"] - current["Close"])
 
-            v1 = current['High']
-            v2 = current['Low']
-            p1 = abs(v1 - v2)
-            p2 = (v1 + v2) / 2
-            p3 = p1 / p2
-            p4 = round(float(p3 * 100), 3)
-            p5 = p4 * 100
-            df.loc[idx,'HL%'] = p5
-
-            v1 = current['Open']
-            v2 = current['Low']
-            p1 = abs(v1 - v2)
-            p2 = (v1 + v2) / 2
-            p3 = p1 / p2
-            p4 = round(float(p3 * 100), 3)
-            p5 = p4 * 100
-            df.loc[idx,'OL%'] = p5
-
-            v1 = current['Open']
-            v2 = current['High']
-            p1 = abs(v1 - v2)
-            p2 = (v1 + v2) / 2
-            p3 = p1 / p2
-            p4 = round(float(p3 * 100), 3)
-            p5 = p4 * 100
-            df.loc[idx,'OH%'] = p5
-
-            v1 = current['Open']
-            v2 = current['Close']
-            p1 = abs(v1 - v2)
-            p2 = (v1 + v2) / 2
-            p3 = p1 / p2
-            p4 = round(float(p3 * 100), 3)
-            p5 = p4 * 100
-            df.loc[idx,'OC%'] = p5
-
-            v1 = current['Close']
-            v2 = current['High']
-            p1 =abs(v1 - v2)
-            p2 = (v1 + v2) / 2
-            p3 = p1 / p2
-            p4 = round(float(p3 * 100), 3)
-            p5 = p4 * 100
-            df.loc[idx,'CH%'] = p5
-
-            v1 = current['Close']
-            v2 = current['Low']
-            p1 = abs(v1 - v2)
-            p2 = (v1 + v2) / 2
-            p3 = p1 / p2
-            p4 = round(float(p3 * 100), 3)
-            p5 = p4 * 100
-            df.loc[idx,'CH%'] = p5
-
             v1 = current['Open']
             v2 = current['Close']
             df.loc[idx,'SIDE'] = np.where(v1 < v2, 1, -1)
 
+        print(df.tail(4))
         rr = len(df.index)
+        high = df["High"][rr - 2]
+        low = df["Low"][rr - 2]
+        close = df["Close"][rr - 2]
 
         EMA_ANND = df["EMA--"][rr - 2]
         WMA_ANND = df["WMA--"][rr - 2]
@@ -166,16 +205,6 @@ class PatternDetect:
         BearE_ANND = df["BearE"][rr - 2]
         IB_ANND = df["IB"][rr - 2]
         OB_ANND = df["OB"][rr - 2]
-
-        RSI_ANND = df["RSI"][rr - 2]
-        fastd_ANND = df["fastd"][rr - 2]
-        fastk_ANND = df["fastk"][rr - 2]
-        HL_ANND = df["HL%"][rr - 2]
-        OL_ANND = df["OL%"][rr - 2]
-        OH_ANND = df["OH%"][rr - 2]
-        OC_ANND = df["OC%"][rr - 2]
-        CH_ANND = df["CH%"][rr - 2]
-        SIDE_ANND = df["SIDE"][rr - 2]
         VOLUME_ANND = df["Volume"][rr - 2]
 
         plus = 0
@@ -195,40 +224,66 @@ class PatternDetect:
                         minus += 1
                 else:
                     break
-        
 
-        if df["BullS"][rr - 2] == True:
-            side = "BUY"
-        elif df["BullPB"][rr - 2] == True:
-            side = "BUY"
-        elif df["BullE"][rr - 2] == True:
-            side = "BUY"
-        elif df["BearS"][rr - 2] == True:
-            side = "SELL"            
-        elif df["BearPB"][rr - 2] == True:
-            side = "SELL"
-        elif df["BearE"][rr - 2] == True:
-            side = "SELL"
-        elif df["IB"][rr - 2] == True:
-            side = "BUY"
-        elif df["OB"][rr - 2] == True:
-            side = "BUY"   
+        if plus > minus:
+            side = "BUY"                        
+        elif minus > plus:
+            side = "SELL"                  
+            print(side, plus, minus)
         else:
-            if plus > minus:
-                side = "BUY"                        
-            elif minus > plus:
+            if df["BullS"][rr - 2] == True:
+                side = "BUY"
+            elif df["BullPB"][rr - 2] == True:
+                side = "BUY"
+            elif df["BullE"][rr - 2] == True:
+                side = "BUY"
+            elif df["BearS"][rr - 2] == True:
                 side = "SELL"            
+            elif df["BearPB"][rr - 2] == True:
+                side = "SELL"
+            elif df["BearE"][rr - 2] == True:
+                side = "SELL"
+            elif df["IB"][rr - 2] == True:
+                side = "BUY"
+            elif df["OB"][rr - 2] == True:
+                side = "BUY"   
 
-        print(side, plus, minus)
-        with open('output.txt', 'w') as f:
-            f.write(
-                df.to_string()
-            )
 
-        print("-----")
+        
+def exit():
 
-if __name__ == '__main__':
-    pattern_detect = PatternDetect()
+    result = db.get_status(pair)
+    xx = 0
+    for x in result:
+        xx += 1
+        orderIdTP = x['orderIdTP']
+        orderId = x['orderId']
+
+    status = CreateOrder.check_order(orderIdTP, pair)             
+
+    if status == "FILLED" or status == "CANCELED":
+
+        db.put_order_Exit(pair)
+        print("Order FILLED", orderIdTP, pair)
+        quit()
+
+    if status == "NEW":
+        CreateOrder.cancel_order(orderId, pair, qty, side)
+        CreateOrder.cancel_order2(orderIdTP, pair)
+        db.put_order_Exit(pair)
+        print("EXIT by Time Frame.")
+        quit()
+
+#=====================================================================================================================
+
+pattern_detect = PatternDetect()
+
+for _ in range(20):
     asyncio.get_event_loop().run_until_complete(pattern_detect.main())
 
-# https://towardsdatascience.com/how-to-identify-japanese-candlesticks-patterns-in-python-b835d1cc72f7
+
+# schedule.every(tf).minutes.do(exit)
+
+# while True:
+#     schedule.run_pending()
+#     time.sleep(1)

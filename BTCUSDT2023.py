@@ -15,8 +15,8 @@ import config
 import callDB
 import CO
 
-import seaborn as sns
-import matplotlib.pyplot as plt
+# import seaborn as sns
+# import matplotlib.pyplot as plt
 
 
 db = callDB.call()

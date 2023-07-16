@@ -16,7 +16,6 @@ import callDB
 import CO
 # Define the Cloud SQL PostgreSQL connection details
 from dotenv import load_dotenv
-
 load_dotenv()
 
 db = callDB.call()

@@ -77,10 +77,9 @@ class PatternDetect:
                 get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
 
                 msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
-                data = self.get_data_frame(symbol=pair, msg=msg) 
-                self.Pattern_Detect()                 
-                print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')                       
-                print(deltaSMA)
+                data = self.get_data_frame(symbol=pair, msg=msg)
+                self.Pattern_Detect()
+                print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')
 
                 # await client.close_connection()
                 while 1 == 1:

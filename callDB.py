@@ -1,9 +1,22 @@
+import os
 from datetime import datetime
 
 import mysql.connector
 from mysql.connector import errorcode
 
-import config
+# import config
+# Define the Cloud SQL PostgreSQL connection details
+from dotenv import load_dotenv
+
+load_dotenv()
+
+BINANCE_API_KEY = os.getenv('BINANCE_API_KEY')
+BINANCE_SECRET_KEY = os.getenv('BINANCE_SECRET_KEY')
+HOST = os.getenv('HOST')
+DATABASE = os.getenv('DATABASE')
+USER = os.getenv('DB_USER')
+PASSWORD = os.getenv('PASSWORD')
+
 
 class call:
 
@@ -439,7 +452,7 @@ class call:
         try:
             self.get_cnx()
             cursor = cnx.cursor(dictionary=True)
-            cursor.execute("SELECT name FROM users WHERE api_key='" + config.BINANCE_API_KEY + "'")
+            cursor.execute("SELECT name FROM users WHERE api_key='" + BINANCE_API_KEY + "'")
             dd = cursor.fetchone()
             cnx.close()
 
@@ -470,7 +483,7 @@ class call:
         global cnx
 
         try:
-            cnx = mysql.connector.connect(user=config.USER, password=config.PASSWORD, host=config.HOST, database=config.DATABASE)    
+            cnx = mysql.connector.connect(user=USER, password=PASSWORD, host=HOST, database=DATABASE)    
 
         except mysql.connector.Error as err:
 

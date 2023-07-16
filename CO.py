@@ -1,11 +1,25 @@
+import os
 import time
 from binance.client import Client
-import config
+# import config
+# Define the Cloud SQL PostgreSQL connection details
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from binance.enums import *
 from binance.exceptions import BinanceAPIException, BinanceOrderException
 import callDB
 db = callDB.call()
-client = Client(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
+
+BINANCE_API_KEY = os.getenv('BINANCE_API_KEY')
+BINANCE_SECRET_KEY = os.getenv('BINANCE_SECRET_KEY')
+HOST = os.getenv('HOST')
+DATABASE = os.getenv('DATABASE')
+USER = os.getenv('DB_USER')
+PASSWORD = os.getenv('PASSWORD')
+
+client = Client(BINANCE_API_KEY, BINANCE_SECRET_KEY)
 # print("Logged in")
 
 class call:

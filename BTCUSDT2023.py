@@ -1,23 +1,28 @@
+
 # %matplotlib inline
-
-from datetime import datetime, timedelta, timezone
-from glob import glob
-import time
+import os
+from datetime import datetime, timedelta
 import talib
+import time
 import asyncio
-
 import pandas as pd
-import numpy as np
-
-from binance.client import AsyncClient
-
-import config
 import callDB
 import CO
+from binance.client import AsyncClient
+
+# Define the Cloud SQL PostgreSQL connection details
+from dotenv import load_dotenv
+load_dotenv()
 
 # import seaborn as sns
 # import matplotlib.pyplot as plt
 
+HOST = os.getenv('HOST')
+DATABASE = os.getenv('DATABASE')
+USER = os.getenv('DB_USER')
+PASSWORD = os.getenv('PASSWORD')
+BINANCE_API_KEY = os.getenv('BINANCE_API_KEY')
+BINANCE_SECRET_KEY = os.getenv('BINANCE_SECRET_KEY')
 
 db = callDB.call()
 CreateOrder = CO.call()
@@ -53,7 +58,7 @@ class PatternDetect:
                 # pair = "MKRUSDT"
                 # timeframe = "1d"
                 try:                    
-                    client = await AsyncClient.create(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
+                    client = await AsyncClient.create(BINANCE_API_KEY,BINANCE_SECRET_KEY)
 
                     if timeframe == "1m": deltaSMA = 10
                     if timeframe == "3m": deltaSMA = 20
@@ -70,41 +75,43 @@ class PatternDetect:
                         
                     last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
                     get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+                    print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')                       
 
                     msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
                     data = self.get_data_frame(symbol=pair, msg=msg) 
-                    self.Pattern_Detect()                 
-                    print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')                       
-                    # print(deltaSMA)
+                    self.Pattern_Detect()              
+                    print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n') 
+                             
+                    print(deltaSMA)
 
-                    # await client.close_connection()
-                    # while 1 == 1:
-                    #     try:
-                    #         last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
-                    #         get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
+                    await client.close_connection()
+                    while 1 == 1:
+                        try:
+                            last_hour_date_time = datetime.now() - timedelta(hours = deltaSMA)
+                            get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
 
-                    #         msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
-                    #         data = self.get_data_frame(symbol=pair, msg=msg) 
-                    #         print(data)
+                            msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
+                            data = self.get_data_frame(symbol=pair, msg=msg) 
+                            print(data)
 
-                            # rr = len(dd.index)
-                            # RSI = dd['RSI'][rr - 1]
-                            # STOCHRSI_1 = dd['fastd'][rr - 1]
-                            # STOCHRSI_2 = dd['fastk'][rr - 1]
-                            # print(RSI, STOCHRSI_1, STOCHRSI_2)
+                            rr = len(dd.index)
+                            RSI = dd['RSI'][rr - 1]
+                            STOCHRSI_1 = dd['fastd'][rr - 1]
+                            STOCHRSI_2 = dd['fastk'][rr - 1]
+                            print(RSI, STOCHRSI_1, STOCHRSI_2)
 
-                            # time.sleep(1)
-                    #     except:
-                    #         print("Error:")
-                    #         break
+                            time.sleep(1)
+                        except:
+                            print("Error:")
+                            break
 
-                    # await client.close_connection()
-                    # quit()
+                    await client.close_connection()
+                    quit()
 
                     # CreateOrder.futures_order(pair, qty, side, order_type, take_profit, timeframe)
                     # print('------------futures_order------------')
                     
-                    await client.close_connection()
+                    # await client.close_connection()
 
                 except: await client.close_connection()     
 

@@ -1,3 +1,4 @@
+import os
 import mysql.connector
 from mysql.connector import errorcode
 
@@ -5,9 +6,19 @@ import datetime as dt
 import pandas as pd
 
 from binance import Client
-import config
+# import config
+from dotenv import load_dotenv
 
-client = Client(config.BINANCE_API_KEY,config.BINANCE_SECRET_KEY)
+load_dotenv()
+
+db_host = os.getenv('HOST')
+db_name = os.getenv('DATABASE')
+db_user = os.getenv('DB_USER')
+db_password = os.getenv('PASSWORD')
+BINANCE_API_KEY = os.getenv('BINANCE_API_KEY')
+BINANCE_SECRET_KEY = os.getenv('BINANCE_SECRET_KEY')
+
+client = Client(BINANCE_API_KEY, BINANCE_SECRET_KEY)
 
 def get_df(start_date, end_date=None):
     start_date_timestamp = int(dt.datetime.strptime(str(start_date), '%Y-%m-%d').timestamp()*1000)
@@ -79,7 +90,7 @@ def insert_TH(start_date):
                 timee = df['time'][x]
                 positionSide = df['positionSide'][x]
                 buyer = df['buyer'][x]
-                maker = df['maker'][x]        
+                maker = df['maker'][x]
 
                 values = (symbol, int(id), int(orderId), side, float(price), float(qty), float(realizedPnl), marginAsset, int(timee), float(quoteQty), float(commission), commissionAsset, positionSide, bool(buyer), bool(maker))
                 

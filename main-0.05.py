@@ -17,9 +17,6 @@ from binance.client import AsyncClient
 from dotenv import load_dotenv
 load_dotenv()
 
-# import seaborn as sns
-# import matplotlib.pyplot as plt
-
 HOST = os.getenv('HOST')
 DATABASE = os.getenv('DATABASE')
 USER = os.getenv('DB_USER')
@@ -27,8 +24,8 @@ PASSWORD = os.getenv('PASSWORD')
 BINANCE_API_KEY = os.getenv('BINANCE_API_KEY')
 BINANCE_SECRET_KEY = os.getenv('BINANCE_SECRET_KEY')
 
-db = callDB.call()
-CreateOrder = CO.call()
+# db = callDB.call()
+# CreateOrder = CO.call()
 
 # Function to check the database connection
 def check_database_connection():
@@ -279,44 +276,41 @@ class PatternDetect:
         print(self.pp)
         print("\n" + str(side))
 
-        with open('output.txt', 'w') as f:
-            f.write(
-                self.pp.to_string()
-            )  
-
     # Function to insert the "pp" data into the "bnb" table
-    def insert_pp_to_database(self):
-        try:
-            # Open a connection to the PostgreSQL database
-            connection = psycopg2.connect(
-                host=HOST,
-                database=DATABASE,
-                user=USER,
-                password=PASSWORD
-            )
-            cursor = connection.cursor()
+def insert_pp_to_database(self):
+    try:
+        # Open a connection to the PostgreSQL database
+        connection = psycopg2.connect(
+            host=HOST,
+            database=DATABASE,
+            user=USER,
+            password=PASSWORD
+        )
+        cursor = connection.cursor()
 
-            # Iterate through each row of the "pp" dataframe and insert it into the "bnb" table
-            for index, row in self.pp.iterrows():
-                query = f"""
-                    INSERT INTO bnb (pair, side, Time, Open, High, Low, Close, Volume, BOP, RSI, fastd, fastk, MACD, Signal, History, BOPT, RSIT, fastdT, fastkT, MACDT, SignalT, HistoryT)
-                    VALUES (
-                        '{pair}', {side}, '{row['Time']}', {row['Open']}, {row['High']}, {row['Low']}, {row['Close']}, {row['Volume']}, {row['BOP']}, {row['RSI']}, {row['fastd']}, {row['fastk']},
-                        {row['MACD']}, {row['Signal']}, {row['History']}, {row['BOPT']}, {row['RSIT']}, {row['fastdT']}, {row['fastkT']}, {row['MACDT']}, {row['SignalT']}, {row['HistoryT']}
-                    )
-                """
-                cursor.execute(query)
+        # Iterate through each row of the "pp" dataframe and insert it into the "bnb" table
+        for index, row in self.pp.iterrows():
+            query = f"""
+                INSERT INTO bnb (pair, side, "Time", "Open", "High", "Low", "Close", "Volume", "BOP", "RSI", "fastd", "fastk", "MACD", "Signal", "History", "BOPT", "RSIT", "fastdT", "fastkT", "MACDT", "SignalT", "HistoryT")
+                VALUES (
+                    '{pair}', {side}, '{row['Time']}', {row['Open']}, {row['High']}, {row['Low']}, {row['Close']}, {row['Volume']}, {row['BOP']}, {row['RSI']}, {row['fastd']}, {row['fastk']},
+                    {row['MACD']}, {row['Signal']}, {row['History']}, {row['BOPT']}, {row['RSIT']}, {row['fastdT']}, {row['fastkT']}, {row['MACDT']}, {row['SignalT']}, {row['HistoryT']}
+                )
+                ON CONFLICT ("Time") DO NOTHING;  -- Ignore duplicate records
+            """
+            cursor.execute(query)
 
-            # Commit the changes and close the connection
-            connection.commit()
-            cursor.close()
-            connection.close()
+        # Commit the changes and close the connection
+        connection.commit()
+        cursor.close()
+        connection.close()
 
-        except (Exception, psycopg2.Error) as error:
-            print("Error inserting data:", error)
-            pass
-        finally:
-            print('Data inserted successfully!')
+    except (Exception, psycopg2.Error) as error:
+        print("Error inserting data:", error)
+        pass
+    finally:
+        print('Data inserted successfully!')
+
 
 def run_every_15_minutes():
     try:

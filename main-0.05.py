@@ -9,8 +9,8 @@ import schedule
 import asyncio
 import pandas as pd
 import numpy as np
-import callDB
-import CO
+# import callDB
+# import CO
 from binance.client import AsyncClient
 
 # Define the Cloud SQL PostgreSQL connection details
@@ -51,8 +51,10 @@ if check_database_connection():
     print("Database connection successful. Proceeding with the rest of the script.")
 else:
     # Database connection failed, you may want to handle this situation gracefully
-    print("Database connection failed. Run this on terminal postgres -D /opt/homebrew/var/postgresql@14")
-    # 
+    print("Database connection failed. Run this on terminal pg_ctl -D /opt/homebrew/var/postgresql@14 start")
+    # pip install --upgrade --force-reinstall numpy
+    # pg_ctl -D /opt/homebrew/var/postgresql@14 stop
+
     quit()
 
 class PatternDetect:
@@ -261,12 +263,12 @@ class PatternDetect:
         print(f"LONG Count: {count_long}")
         print(f"SHORT Count: {count_short}")     
 
-        # Check if LONG is greater than or equal to 2 times SHORT
-        if count_long >= 2 * count_short:
-            print("LONG is greater than or equal to 2 times SHORT")
+        # Check if LONG is greater than or equal to 3 times SHORT
+        if count_long >= 3 * count_short:
+            print("LONG is greater than SHORT")
             side = 1
-        elif count_short >= 2 * count_long:
-            print("SHORT is greater than or equal to 2 times LONG")
+        elif count_short >= 3 * count_long:
+            print("SHORT is greater than LONG")
             side = 0
         else:
             print("No significant difference between LONG and SHORT")
@@ -277,39 +279,38 @@ class PatternDetect:
         print("\n" + str(side))
 
     # Function to insert the "pp" data into the "bnb" table
-def insert_pp_to_database(self):
-    try:
-        # Open a connection to the PostgreSQL database
-        connection = psycopg2.connect(
-            host=HOST,
-            database=DATABASE,
-            user=USER,
-            password=PASSWORD
-        )
-        cursor = connection.cursor()
+    def insert_pp_to_database(self):
+        try:
+            # Open a connection to the PostgreSQL database
+            connection = psycopg2.connect(
+                host=HOST,
+                database=DATABASE,
+                user=USER,
+                password=PASSWORD
+            )
+            cursor = connection.cursor()
 
-        # Iterate through each row of the "pp" dataframe and insert it into the "bnb" table
-        for index, row in self.pp.iterrows():
-            query = f"""
-                INSERT INTO bnb (pair, side, "Time", "Open", "High", "Low", "Close", "Volume", "BOP", "RSI", "fastd", "fastk", "MACD", "Signal", "History", "BOPT", "RSIT", "fastdT", "fastkT", "MACDT", "SignalT", "HistoryT")
-                VALUES (
-                    '{pair}', {side}, '{row['Time']}', {row['Open']}, {row['High']}, {row['Low']}, {row['Close']}, {row['Volume']}, {row['BOP']}, {row['RSI']}, {row['fastd']}, {row['fastk']},
-                    {row['MACD']}, {row['Signal']}, {row['History']}, {row['BOPT']}, {row['RSIT']}, {row['fastdT']}, {row['fastkT']}, {row['MACDT']}, {row['SignalT']}, {row['HistoryT']}
-                )
-                ON CONFLICT ("Time") DO NOTHING;  -- Ignore duplicate records
-            """
-            cursor.execute(query)
+            # Iterate through each row of the "pp" dataframe and insert it into the "bnb" table
+            for index, row in self.pp.iterrows():
+                query = f"""
+                    INSERT INTO bnb (pair, side, "time", "open", "high", "low", "close", "volume", "bop", "rsi", "fastd", "fastk", "macd", "signal", "history", "bopt", "rsit", "fastdt", "fastkt", "macdt", "signalt", "historyt")
+                    VALUES (
+                        '{pair}', {side}, '{row['Time']}', {row['Open']}, {row['High']}, {row['Low']}, {row['Close']}, {row['Volume']}, {row['BOP']}, {row['RSI']}, {row['fastd']}, {row['fastk']},
+                        {row['MACD']}, {row['Signal']}, {row['History']}, {row['BOPT']}, {row['RSIT']}, {row['fastdT']}, {row['fastkT']}, {row['MACDT']}, {row['SignalT']}, {row['HistoryT']}
+                    )
+                """
+                cursor.execute(query)
 
-        # Commit the changes and close the connection
-        connection.commit()
-        cursor.close()
-        connection.close()
+            # Commit the changes and close the connection
+            connection.commit()
+            cursor.close()
+            connection.close()
 
-    except (Exception, psycopg2.Error) as error:
-        print("Error inserting data:", error)
-        pass
-    finally:
-        print('Data inserted successfully!')
+        except (Exception, psycopg2.Error) as error:
+            print("Error inserting data:", error)
+            pass
+        finally:
+            print('Data inserted successfully!')
 
 
 def run_every_15_minutes():

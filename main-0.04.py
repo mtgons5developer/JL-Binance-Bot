@@ -30,6 +30,34 @@ BINANCE_SECRET_KEY = os.getenv('BINANCE_SECRET_KEY')
 db = callDB.call()
 CreateOrder = CO.call()
 
+# Function to check the database connection
+def check_database_connection():
+    try:
+        # Attempt to establish a connection to the database
+        conn = psycopg2.connect(
+            host=HOST,
+            database=DATABASE,
+            user=USER,
+            password=PASSWORD
+        )
+        # If the connection is successful, close it and return True
+        conn.close()
+        return True
+    except Exception as e:
+        # If there's an error, print the error message and return False
+        print(f"Database connection error: {e}")
+        return False
+
+# Check the database connection before proceeding
+if check_database_connection():
+    # Database connection is successful, you can proceed with the rest of your code
+    print("Database connection successful. Proceeding with the rest of the script.")
+else:
+    # Database connection failed, you may want to handle this situation gracefully
+    print("Database connection failed. Run this on terminal postgres -D /opt/homebrew/var/postgresql@14")
+    # 
+    quit()
+
 class PatternDetect:
     
     def __init__(self):
@@ -63,6 +91,7 @@ class PatternDetect:
             msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
             data = self.get_data_frame(symbol=pair, msg=msg) 
             self.Pattern_Detect()
+            current_datetime = datetime.now()
             print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')
             await client.close_connection()
 
@@ -81,6 +110,7 @@ class PatternDetect:
         df.columns = ['Time','Open', 'High', 'Low', 'Close', 'Volume','CloseTime', 'qav','num_trades','taker_base_vol', 'taker_quote_vol', 'ignore']
         df = df.loc[:, ['Time','Open', 'High', 'Low', 'Close', 'Volume']]
         df["Time"] = pd.to_datetime(df["Time"], unit='ms')
+        df["Time"] = df["Time"] + pd.Timedelta(hours=8)
         df["Open"] = df["Open"].astype(float)
         df["High"] = df["High"].astype(float)
         df["Low"] = df["Low"].astype(float)
@@ -142,17 +172,26 @@ class PatternDetect:
         # https://gist.github.com/highfestiva/b71e76f51eed84d56c1be8ebbcc286b5?permalink_comment_id=3617078
         # https://binance-docs.github.io/apidocs/futures/en/#change-log
 
+# Initialize counters for LONG and SHORT
+        count_long = 0
+        count_short = 0
+
         yy = 5
         RSIT = "NONE"
         for y in df:
             yy -= 1
             n = df['RSIT'][rr - yy]
             if n < 0:
-                RSIT = "SHORT"
+                RSIT = "SHORT"                
             else:
                 RSIT = "LONG"
 
             if yy == 1: break
+
+        if RSIT == "SHORT":
+            count_short += 1
+        if RSIT == "LONG":
+            count_long += 1
 
         yy = 5
         fastdT = "NONE"
@@ -166,6 +205,11 @@ class PatternDetect:
 
             if yy == 1: break
 
+        if fastdT == "SHORT":
+            count_short += 1
+        if fastdT == "LONG":
+            count_long += 1
+
         yy = 5
         MACDT = "NONE"
         for y in df:
@@ -177,6 +221,11 @@ class PatternDetect:
                 MACDT = "LONG"
 
             if yy == 1: break
+
+        if MACDT == "SHORT":
+            count_short += 1
+        if MACDT == "LONG":
+            count_long += 1
 
         yy = 5
         SignalT = "NONE"
@@ -190,6 +239,11 @@ class PatternDetect:
 
             if yy == 1: break
 
+        if SignalT == "SHORT":
+            count_short += 1
+        if SignalT == "LONG":
+            count_long += 1
+
         yy = 5
         HistoryT = "NONE"
         for y in df:
@@ -202,25 +256,43 @@ class PatternDetect:
 
             if yy == 1: break
 
-        print(RSIT)
-        print(fastdT)
-        print(MACDT)
-        print(SignalT)
-        print(HistoryT)
-        side = "NONE"
+        if HistoryT == "SHORT":
+            count_short += 1
+        if HistoryT == "LONG":
+            count_long += 1
 
-        if RSIT == "LONG" and fastdT == "LONG" and MACDT == "LONG" and SignalT == "LONG" and HistoryT == "LONG":
-            print("======== B U Y =======")
-            side = "BUY"
-        elif RSIT == "SHORT" and fastdT == "SHORT" and MACDT == "SHORT" and SignalT == "SHORT" and HistoryT == "SHORT":
-            print("======= S E L L =======")
-            side = "SELL"
-        #dldl
+        # print(RSIT)
+        # print(fastdT)
+        # print(MACDT)
+        # print(SignalT)
+        # print(HistoryT)
+
+        print(f"LONG Count: {count_long}")
+        print(f"SHORT Count: {count_short}")     
+
+        # if count_long > count_short:
+        #     side = 1
+        # elif count_long < count_short:
+        #     side = 0
+        # else:
+        #     side = 2
+
+        # Check if LONG is greater than or equal to 2 times SHORT
+        if count_long >= 2 * count_short:
+            print("LONG is greater than or equal to 2 times SHORT")
+            side = 1
+        elif count_short >= 2 * count_long:
+            print("SHORT is greater than or equal to 2 times LONG")
+            side = 0
+        else:
+            print("No significant difference between LONG and SHORT")
+            side = 2
 
         # pp = df.tail(4)
         self.pp = df.tail(4)
         print(self.pp)
-        print("\n" + side)
+        print("\n" + str(side))
+
         # val = pp['OpenT'].value_counts()
         # print(val[0:1]) #- Column
         # print(val[0:2]) #+ Column
@@ -245,9 +317,9 @@ class PatternDetect:
             # Iterate through each row of the "pp" dataframe and insert it into the "bnb" table
             for index, row in self.pp.iterrows():
                 query = f"""
-                    INSERT INTO bnb (Time, Open, High, Low, Close, Volume, BOP, RSI, fastd, fastk, MACD, Signal, History, BOPT, RSIT, fastdT, fastkT, MACDT, SignalT, HistoryT)
+                    INSERT INTO bnb (pair, side, Time, Open, High, Low, Close, Volume, BOP, RSI, fastd, fastk, MACD, Signal, History, BOPT, RSIT, fastdT, fastkT, MACDT, SignalT, HistoryT)
                     VALUES (
-                        '{row['Time']}', {row['Open']}, {row['High']}, {row['Low']}, {row['Close']}, {row['Volume']}, {row['BOP']}, {row['RSI']}, {row['fastd']}, {row['fastk']},
+                        '{pair}', {side}, '{row['Time']}', {row['Open']}, {row['High']}, {row['Low']}, {row['Close']}, {row['Volume']}, {row['BOP']}, {row['RSI']}, {row['fastd']}, {row['fastk']},
                         {row['MACD']}, {row['Signal']}, {row['History']}, {row['BOPT']}, {row['RSIT']}, {row['fastdT']}, {row['fastkT']}, {row['MACDT']}, {row['SignalT']}, {row['HistoryT']}
                     )
                 """
@@ -259,29 +331,10 @@ class PatternDetect:
             connection.close()
 
         except (Exception, psycopg2.Error) as error:
-            # print("Error inserting data:", error)
+            print("Error inserting data:", error)
             pass
         finally:
             print('Data inserted successfully!')
-
-# if __name__ == '__main__':
-#     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-#     pattern_detect = PatternDetect()
-
-#     while True:
-#         try:
-#             # Run the main method to gather data
-#             asyncio.get_event_loop().run_until_complete(pattern_detect.main())
-
-#             # Insert the data to the database
-#             pattern_detect.insert_pp_to_database()
-
-#         except Exception as e:
-#             print("Error:", str(e))
-
-#         # Sleep for 15 minutes before running again
-#         time.sleep(60)
-# Schedule the task to run every 15 minutes
 
 def run_every_15_minutes():
     try:
@@ -294,18 +347,33 @@ def run_every_15_minutes():
     except Exception as e:
         print("Error:", str(e))
 
-schedule.every(1).minutes.do(run_every_15_minutes)
+# schedule.every(1).minutes.do(run_every_15_minutes)
+
+# if __name__ == '__main__':
+#     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+#     # quit()
+#     pattern_detect = PatternDetect()
+
+#     while True:
+#         # Run the scheduled tasks
+#         schedule.run_pending()
+
+#         # Sleep for 1 second before checking the schedule again
+#         time.sleep(1)
+
+# (Previous imports and database connection code...)
 
 if __name__ == '__main__':
     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     pattern_detect = PatternDetect()
 
-    while True:
-        # Run the scheduled tasks
-        schedule.run_pending()
+    try:
+        asyncio.get_event_loop().run_until_complete(pattern_detect.main())
+        pattern_detect.insert_pp_to_database()
+        quit()
+    except Exception as e:
+        print("Error:", str(e))
 
-        # Sleep for 1 second before checking the schedule again
-        time.sleep(1)
 
 # entry_price = 30257.10
 # leverage = 50

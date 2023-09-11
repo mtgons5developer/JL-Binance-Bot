@@ -52,8 +52,9 @@ if check_database_connection():
 else:
     # Database connection failed, you may want to handle this situation gracefully
     print("Database connection failed. Run this on terminal pg_ctl -D /opt/homebrew/var/postgresql@14 start")
-    # pip install --upgrade --force-reinstall numpy
-    # pg_ctl -D /opt/homebrew/var/postgresql@14 stop
+    #pip install --upgrade --force-reinstall numpy
+    #pg_ctl -D /opt/homebrew/var/postgresql@14 stop
+    #pg_ctl -D /opt/homebrew/var/postgresql@14 start
 
     quit()
 
@@ -88,7 +89,8 @@ class PatternDetect:
             get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
 
             msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
-            data = self.get_data_frame(symbol=pair, msg=msg) 
+            # data = self.get_data_frame(symbol=pair, msg=msg)
+            # data2 = self.get_data_frame2(symbol=pair, msg=msg) 
             self.Pattern_Detect()
             current_datetime = datetime.now()
             print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')
@@ -103,7 +105,7 @@ class PatternDetect:
 #=====================================================================================================================
 
     def get_data_frame(self, symbol, msg):
-        global rows_count, df, volume, high, close
+        global rows_count, df, volume, high, close, gf
 
         df = pd.DataFrame(msg)
         df.columns = ['Time','Open', 'High', 'Low', 'Close', 'Volume','CloseTime', 'qav','num_trades','taker_base_vol', 'taker_quote_vol', 'ignore']
@@ -115,6 +117,10 @@ class PatternDetect:
         df["Low"] = df["Low"].astype(float)
         df["Close"] = df["Close"].astype(float)
         df["Volume"] = df["Volume"].astype(float)
+
+        gf["Open"] = gf["Open"].astype(float)
+        gf["High"] = gf["High"].astype(float)
+        gf["Low"] = gf["Low"].astype(float)
 
         return df
     
@@ -260,6 +266,12 @@ class PatternDetect:
         if HistoryT == "LONG":
             count_long += 1
 
+        # print(RSIT)
+        # print(fastdT)
+        # print(MACDT)
+        # print(SignalT)
+        # print(HistoryT)
+
         print(f"LONG Count: {count_long}")
         print(f"SHORT Count: {count_short}")     
 
@@ -277,6 +289,11 @@ class PatternDetect:
         self.pp = df.tail(4)
         print(self.pp)
         print("\n" + str(side))
+
+        with open('output.txt', 'w') as f:
+            f.write(
+                self.pp.to_string()
+            )  
 
     # Function to insert the "pp" data into the "bnb" table
     def insert_pp_to_database(self):
@@ -358,3 +375,4 @@ if __name__ == '__main__':
 
 # exit_price = entry_price * (1 + (profit_percentage / (leverage * 100)))
 # print(f"Exit Price = {exit_price:.2f} USDT")
+

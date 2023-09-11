@@ -10,13 +10,49 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
-# ... (Database connection and other setup code) ...
+# Define the Cloud SQL PostgreSQL connection details
+from dotenv import load_dotenv
+load_dotenv()
+
+HOST = os.getenv('HOST')
+DATABASE = os.getenv('DATABASE')
+USER = os.getenv('DB_USER')
+PASSWORD = os.getenv('PASSWORD')
+BINANCE_API_KEY = os.getenv('BINANCE_API_KEY')
+BINANCE_SECRET_KEY = os.getenv('BINANCE_SECRET_KEY')
+TABLE_NAME = "ml"
+
+# Load data from your database
+def load_data():
+    try:
+        # Establish a database connection
+        connection = psycopg2.connect(
+            host=HOST,
+            database=DATABASE,
+            user=USER,
+            password=PASSWORD
+        )
+
+        # Define your SQL query to fetch data
+        query = f"SELECT * FROM {TABLE_NAME}"  # Modify this with your query
+
+        # Fetch data from the database into a DataFrame
+        data = pd.read_sql(query, connection)
+
+        # Close the database connection
+        connection.close()
+
+        return data
+    except Exception as e:
+        print(f"Error loading data from the database: {e}")
+        return None
+
+# ... (Other setup code) ...
 
 class PatternDetect:
     # ...
 
-    def train_machine_learning_model(self):
-        # Assuming df contains the preprocessed data with features and labels
+    def train_machine_learning_model(self, df):
         X = df[['RSI', 'MACD']]  # Features
         y = df['SignalT']  # Target variable
 
@@ -35,12 +71,16 @@ class PatternDetect:
         print(f"Model Accuracy: {accuracy * 100:.2f}%")
 
     def main(self):
-        # ... (Existing code to collect data and calculate signals) ...
+        # Load data from your database
+        df = load_data()
 
-        # Train the machine learning model
-        self.train_machine_learning_model()
+        if df is not None:
+            # ... (Existing code to calculate signals) ...
 
-        # ... (Existing code to determine trading strategy and update database) ...
+            # Train the machine learning model using the loaded data
+            self.train_machine_learning_model(df)
+
+            # ... (Existing code to determine trading strategy and update database) ...
 
 if __name__ == '__main__':
     pattern_detect = PatternDetect()

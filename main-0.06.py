@@ -10,6 +10,8 @@ import asyncio
 import pandas as pd
 import numpy as np
 import requests
+import pytz
+from binance.client import Client
 
 # import callDB
 # import CO
@@ -57,7 +59,6 @@ else:
     #pip install --upgrade --force-reinstall numpy
     #pg_ctl -D /opt/homebrew/var/postgresql@14 stop
     #pg_ctl -D /opt/homebrew/var/postgresql@14 start
-
     quit()
 
 def get_current_btc_futures_price():
@@ -70,7 +71,40 @@ def get_current_btc_futures_price():
     except Exception as e:
         print("Error fetching BTCUSDT price:", str(e))
         return None
-        
+
+import requests
+
+def get_current_btc_futures_stats():
+    try:
+        url = "https://fapi.binance.com/fapi/v1/klines"
+        params = {
+            "symbol": "BTCUSDT",
+            "interval": "15m",  # 15-minute interval
+            "limit": 1  # Retrieve the latest data point
+        }
+        response = requests.get(url, params=params)
+        data = response.json()[0]  # Get the first (latest) data point
+
+        # Extracting the required data from the Kline/Candlestick data
+        open_price = float(data[1])  # Open price is at index 1
+        close_price = float(data[4])  # Close price is at index 4
+        high_price = float(data[2])   # High price is at index 2
+        low_price = float(data[3])    # Low price is at index 3
+        volume = float(data[5])       # Volume is at index 5
+
+        # Calculate the candle_type based on lastPrice and openPrice
+        candle_type = 'Bullish' if close_price > open_price else 'Bearish'
+
+        # print("Candle Type:", candle_type)
+        # print("Close Price:", close_price)
+
+        # return candle_type
+        return candle_type, open_price, close_price, high_price, low_price, volume
+
+    except Exception as e:
+        print("Error fetching BTCUSDT stats:", str(e))
+        return None
+
 class PatternDetect:
     
     def __init__(self):
@@ -103,7 +137,7 @@ class PatternDetect:
 
             msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
             data = self.get_data_frame(symbol=pair, msg=msg)
-            data2 = self.get_data_frame2(symbol=pair, msg=msg) 
+
             self.Pattern_Detect()
             current_datetime = datetime.now()
             print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')
@@ -131,24 +165,7 @@ class PatternDetect:
         df["Close"] = df["Close"].astype(float)
         df["Volume"] = df["Volume"].astype(float)
 
-        gf["Open"] = gf["Open"].astype(float)
-        gf["High"] = gf["High"].astype(float)
-        gf["Low"] = gf["Low"].astype(float)
-
         return df
-
-    def get_data_frame(self, symbol, msg):
-        global gf
-
-        gf = pd.DataFrame(msg)
-        gf.columns = ['Time','Open', 'High', 'Low', 'Close', 'Volume','CloseTime', 'qav','num_trades','taker_base_vol', 'taker_quote_vol', 'ignore']
-        gf = gf.loc[:, ['Time','Open', 'High', 'Low', 'Close', 'Volume']]
-        gf["Open"] = gf["Open"].astype(float)
-        gf["High"] = gf["High"].astype(float)
-        gf["Low"] = gf["Low"].astype(float)
-        gf["Close"] = gf["Close"].astype(float)
-
-        return gf
         
 #=====================================================================================================================
 
@@ -160,8 +177,6 @@ class PatternDetect:
         macd, macdsignal, macdhist = talib.MACD(df['Close'], fastperiod=3, slowperiod=10, signalperiod=16) #HIGH TF
         fastk, fastd = talib.STOCHRSI(df['Close'], timeperiod=14, fastk_period=5, fastd_period=3, fastd_matype=0)
 
-        # df = df.tail(4)
-        # print(df)
         df['BOP'] = round(BOP, 1)
         df['RSI'] = round(RSI)
         df['fastd'] = round(fastd)
@@ -304,61 +319,25 @@ class PatternDetect:
         # Check if LONG is greater than or equal to 3 times SHORT
         if count_long >= 3 * count_short:
             print("LONG is greater than SHORT")
-            side = 1
+            side = "Bullish"
         elif count_short >= 3 * count_long:
             print("SHORT is greater than LONG")
-            side = 0
+            side = "Bearish"
         else:
             print("No significant difference between LONG and SHORT")
-            side = 2
+            side = "NONE"
 
         self.pp = df.tail(4)
         print(self.pp)
         print("\n" + str(side))
 
-        with open('output.txt', 'w') as f:
-            f.write(
-                self.pp.to_string()
-            )  
+        # with open('output.txt', 'w') as f:
+        #     f.write(
+        #         self.pp.to_string()
+        #     )  
 
-
-    
     # Function to insert the "pp" data into the "bnb" table
     def insert_pp_to_database(self):
-        try:
-            # Open a connection to the PostgreSQL database
-            connection = psycopg2.connect(
-                host=HOST,
-                database=DATABASE,
-                user=USER,
-                password=PASSWORD
-            )
-            cursor = connection.cursor()
-
-            # Iterate through each row of the "pp" dataframe and insert it into the "bnb" table
-            for index, row in self.pp.iterrows():
-                query = f"""
-                    INSERT INTO bnb (pair, side, "time", count_long, count_short, "open", "high", "low", "close", "volume", "bop", "rsi", "fastd", "fastk", "macd", "signal", "history", "bopt", "rsit", "fastdt", "fastkt", "macdt", "signalt", "historyt")
-                    VALUES (
-                        '{pair}', {side}, '{row['Time']}', {count_long}, {count_short}, {row['Open']}, {row['High']}, {row['Low']}, {row['Close']}, {row['Volume']}, {row['BOP']}, {row['RSI']}, {row['fastd']}, {row['fastk']},
-                        {row['MACD']}, {row['Signal']}, {row['History']}, {row['BOPT']}, {row['RSIT']}, {row['fastdT']}, {row['fastkT']}, {row['MACDT']}, {row['SignalT']}, {row['HistoryT']}
-                    )
-                """
-                cursor.execute(query)
-
-            # Commit the changes and close the connection
-            connection.commit()
-            cursor.close()
-            connection.close()
-
-        except (Exception, psycopg2.Error) as error:
-            print("Error inserting data:", error)
-            pass
-        finally:
-            print('Data inserted successfully!')
-
-    # Function to insert the "pp" data into the "bnb" table
-    def insert_pp_to_database2(self):
         try:
 
             btc_futures_price = get_current_btc_futures_price()
@@ -375,12 +354,21 @@ class PatternDetect:
             # Iterate through each row of the "pp" dataframe and insert it into the "bnb" table
             for index, row in self.pp.iterrows():
                 query = f"""
-                    INSERT INTO entries (pair, prophecy, entry, open, close)
+                    INSERT INTO bnb (pair, side, "time", count_long, count_short, "open", "high", "low", "close", "volume", "bop", "rsi", "fastd", "fastk", "macd", "signal", "history", "bopt", "rsit", "fastdt", "fastkt", "macdt", "signalt", "historyt")
                     VALUES (
-                        '{pair}', {side}, {btc_futures_price}, '{row['Open']}', '{row['Close']}'
+                        '{pair}', '{side}', '{row['Time']}', {count_long}, {count_short}, {row['Open']}, {row['High']}, {row['Low']}, {row['Close']}, {row['Volume']}, {row['BOP']}, {row['RSI']}, {row['fastd']}, {row['fastk']},
+                        {row['MACD']}, {row['Signal']}, {row['History']}, {row['BOPT']}, {row['RSIT']}, {row['fastdT']}, {row['fastkT']}, {row['MACDT']}, {row['SignalT']}, {row['HistoryT']}
                     )
                 """
                 cursor.execute(query)
+
+            query2 = f"""
+                INSERT INTO entries (pair, prophecy, entry, open, close)
+                VALUES (
+                    '{pair}', '{side}', {btc_futures_price}, '{row['Open']}', '{row['Close']}'
+                )
+            """
+            cursor.execute(query2)
 
             # Commit the changes and close the connection
             connection.commit()
@@ -388,49 +376,131 @@ class PatternDetect:
             connection.close()
 
         except (Exception, psycopg2.Error) as error:
-            print("Error inserting data:", error)
+            print("Error inserting data1:", error)
             pass
         finally:
             print('Data inserted successfully!')
 
+
+    def entry(self):
+        btc_futures_price = get_current_btc_futures_price()
+        try:
+            # Connect to the PostgreSQL database
+            connection = psycopg2.connect(
+                host=HOST,
+                database=DATABASE,
+                user=USER,
+                password=PASSWORD
+            )
+
+            # Create a cursor object
+            cursor = connection.cursor()
+
+            # Define the SQL query to select rows with 'pair' as 'BTCUSDT' and 'verified' column is NULL
+            select_query = """
+            SELECT entry
+            FROM entries
+            WHERE pair = 'BTCUSDT' AND verified IS NULL;
+            """
+            # WHERE pair = 'BTCUSDT' AND verified IS NULL;
+            # Execute the query to fetch the entry values
+            cursor.execute(select_query)
+
+            entry_values = cursor.fetchall()
+
+            data = get_current_btc_futures_stats()
+
+            # Process the entry values as needed dldl
+            for entry_value in entry_values:
+                entry = float(entry_value[0])  # Assuming 'entry' is the first (and only) column
+                profit = round(entry - btc_futures_price, 1)
+
+                # Define the SQL query to update the 'profit' column in the 'entries' table
+                update_query = """
+                UPDATE entries
+                SET profit = %s, verified = %s
+                WHERE entry = %s;
+                """
+                
+                # Execute the update query with the calculated profit and entry values
+                cursor.execute(update_query, (profit, data[0], entry))
+
+                # Commit the changes to the database
+                connection.commit()
+            
+            # Close the cursor and connection
+            cursor.close()
+            connection.close()
+
+        except (Exception, psycopg2.Error) as error:
+            print("Error:", error)
+
+# def run_every_15_minutes():
+#     try:
+#         # Run the main method to gather data
+#         asyncio.get_event_loop().run_until_complete(pattern_detect.main())
+
+#         # Insert the data to the database
+#         pattern_detect.insert_pp_to_database()
+#         pattern_detect.insert_pp_to_database2()
+
+#     except Exception as e:
+#         print("Error:", str(e))
+
+# schedule.every(15).minutes.do(run_every_15_minutes)
+
+
 def run_every_15_minutes():
     try:
+        # Initialize the Binance client
+        client = Client(BINANCE_API_KEY, BINANCE_SECRET_KEY)
+        # Get the Binance server time
+        server_time = client.get_server_time()
+        binance_time = datetime.datetime.utcfromtimestamp(server_time['serverTime'] / 1000.0)
+        binance_time = pytz.utc.localize(binance_time)
+
+        # Adjust the schedule to run 15 minutes from the next Binance minute
+        next_binance_minute = (binance_time.minute // 15 + 1) * 15
+        next_run_time = binance_time.replace(minute=next_binance_minute, second=0, microsecond=0)
+
         # Run the main method to gather data
         asyncio.get_event_loop().run_until_complete(pattern_detect.main())
 
         # Insert the data to the database
         pattern_detect.insert_pp_to_database()
+        pattern_detect.entry()
+
+        # Print the scheduled run time
+        print("Scheduled run time:", next_run_time.strftime("%Y-%m-%d %H:%M:%S"))
 
     except Exception as e:
         print("Error:", str(e))
-
-# schedule.every(1).minutes.do(run_every_15_minutes)
-
-# if __name__ == '__main__':
-#     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-#     # quit()
-#     pattern_detect = PatternDetect()
-
-#     while True:
-#         # Run the scheduled tasks
-#         schedule.run_pending()
-
-#         # Sleep for 1 second before checking the schedule again
-#         time.sleep(1)
-
-# (Previous imports and database connection code...)
 
 if __name__ == '__main__':
     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    # quit()
     pattern_detect = PatternDetect()
 
-    try:
-        asyncio.get_event_loop().run_until_complete(pattern_detect.main())
-        pattern_detect.insert_pp_to_database()
-        pattern_detect.insert_pp_to_database2()
-        quit()
-    except Exception as e:
-        print("Error:", str(e))
+    while True:
+        # Run the scheduled tasks
+        schedule.run_pending()
+
+        # Sleep for 1 second before checking the schedule again
+        time.sleep(1)
+
+# if __name__ == '__main__':
+#     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+#     pattern_detect = PatternDetect()
+
+#     try:
+#         asyncio.get_event_loop().run_until_complete(pattern_detect.main())
+#         pattern_detect.insert_pp_to_database()
+#         pattern_detect.entry()
+#         quit()
+#     except Exception as e:
+#         print("Error:", str(e))
+
+
 
 
 # entry_price = 30257.10

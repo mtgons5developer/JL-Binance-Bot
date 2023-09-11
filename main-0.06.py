@@ -5,17 +5,15 @@ import psycopg2
 from datetime import datetime, timedelta
 import talib
 import time
-import schedule
 import asyncio
 import pandas as pd
 import numpy as np
 import requests
-import pytz
-from binance.client import Client
 
 # import callDB
 # import CO
 from binance.client import AsyncClient
+from binance.client import Client
 
 # Define the Cloud SQL PostgreSQL connection details
 from dotenv import load_dotenv
@@ -113,7 +111,7 @@ class PatternDetect:
     async def main(self):
         global pair, timeframe, error_set, deltaSMA
         
-        timeframe = "15m"
+        timeframe = "1d"
         pair = "BTCUSDT"
             
         try:                  
@@ -139,7 +137,6 @@ class PatternDetect:
             data = self.get_data_frame(symbol=pair, msg=msg)
 
             self.Pattern_Detect()
-            current_datetime = datetime.now()
             print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')
             await client.close_connection()
 
@@ -148,6 +145,7 @@ class PatternDetect:
         finally:
             print('finally')
             await client.close_connection()  
+
 
 #=====================================================================================================================
 
@@ -435,58 +433,6 @@ class PatternDetect:
         except (Exception, psycopg2.Error) as error:
             print("Error:", error)
 
-# def run_every_15_minutes():
-#     try:
-#         # Run the main method to gather data
-#         asyncio.get_event_loop().run_until_complete(pattern_detect.main())
-
-#         # Insert the data to the database
-#         pattern_detect.insert_pp_to_database()
-#         pattern_detect.insert_pp_to_database2()
-
-#     except Exception as e:
-#         print("Error:", str(e))
-
-# schedule.every(15).minutes.do(run_every_15_minutes)
-
-
-def run_every_15_minutes():
-    try:
-        # Initialize the Binance client
-        client = Client(BINANCE_API_KEY, BINANCE_SECRET_KEY)
-        # Get the Binance server time
-        server_time = client.get_server_time()
-        binance_time = datetime.datetime.utcfromtimestamp(server_time['serverTime'] / 1000.0)
-        binance_time = pytz.utc.localize(binance_time)
-
-        # Adjust the schedule to run 15 minutes from the next Binance minute
-        next_binance_minute = (binance_time.minute // 15 + 1) * 15
-        next_run_time = binance_time.replace(minute=next_binance_minute, second=0, microsecond=0)
-
-        # Run the main method to gather data
-        asyncio.get_event_loop().run_until_complete(pattern_detect.main())
-
-        # Insert the data to the database
-        pattern_detect.insert_pp_to_database()
-        pattern_detect.entry()
-
-        # Print the scheduled run time
-        print("Scheduled run time:", next_run_time.strftime("%Y-%m-%d %H:%M:%S"))
-
-    except Exception as e:
-        print("Error:", str(e))
-
-if __name__ == '__main__':
-    print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    # quit()
-    pattern_detect = PatternDetect()
-
-    while True:
-        # Run the scheduled tasks
-        schedule.run_pending()
-
-        # Sleep for 1 second before checking the schedule again
-        time.sleep(1)
 
 # if __name__ == '__main__':
 #     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -500,13 +446,48 @@ if __name__ == '__main__':
 #     except Exception as e:
 #         print("Error:", str(e))
 
+# Create a Binance client
+client = Client(BINANCE_API_KEY, BINANCE_SECRET_KEY)
 
+def get_next_binance_15min_interval():
+    server_time = client.get_server_time()
+    binance_time = datetime.utcfromtimestamp(server_time['serverTime'] / 1000.0)
+    next_binance_minute = (binance_time.minute // 15 + 1) * 15
+    next_run_time = binance_time.replace(minute=next_binance_minute, second=0, microsecond=0)
+    return next_run_time
 
+def head():
 
-# entry_price = 30257.10
-# leverage = 50
-# profit_percentage = 0.25
+    pattern_detect = PatternDetect()
 
-# exit_price = entry_price * (1 + (profit_percentage / (leverage * 100)))
-# print(f"Exit Price = {exit_price:.2f} USDT")
+    try:
+        while True:
+            # Get the next 15-minute interval on the Binance server
+            # next_run_time = get_next_binance_15min_interval()
 
+            # # Calculate the time remaining until the next interval
+            # current_time = datetime.utcnow()
+            # time_until_next_run = (next_run_time - current_time).total_seconds()
+
+            # # Round the time to the nearest whole number of seconds
+            # time_until_next_run = round(time_until_next_run)
+
+            # # Countdown timer
+            # for remaining in range(time_until_next_run, 0, -1):
+            #     mins, secs = divmod(remaining, 60)
+            #     print(f"Waiting for {mins} minutes and {secs} for the next entry...   ", end='\r')
+            #     time.sleep(1)
+
+            # Execute your code here
+            print("Running your code at:", datetime.utcnow())
+
+            asyncio.get_event_loop().run_until_complete(pattern_detect.main())
+            pattern_detect.insert_pp_to_database()
+            pattern_detect.entry()            
+            # quit()
+            
+    except KeyboardInterrupt:
+        print("Code execution stopped by the user.")
+
+if __name__ == '__main__':
+    head()

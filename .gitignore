@@ -131,3 +131,6 @@ myenv/
 myenv/bin/
 output.txt
 mlenv/
+o.txt
+o2.txt
+chart.py

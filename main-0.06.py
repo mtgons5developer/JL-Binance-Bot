@@ -9,6 +9,8 @@ import schedule
 import asyncio
 import pandas as pd
 import numpy as np
+import requests
+
 # import callDB
 # import CO
 from binance.client import AsyncClient
@@ -58,6 +60,17 @@ else:
 
     quit()
 
+def get_current_btc_futures_price():
+    try:
+        url = "https://fapi.binance.com/fapi/v1/ticker/price"
+        params = {"symbol": "BTCUSDT"}
+        response = requests.get(url, params=params)
+        data = response.json()
+        return float(data["price"])
+    except Exception as e:
+        print("Error fetching BTCUSDT price:", str(e))
+        return None
+        
 class PatternDetect:
     
     def __init__(self):
@@ -89,8 +102,8 @@ class PatternDetect:
             get_startDate = last_hour_date_time.strftime('%Y-%m-%d %H:%M:%S')
 
             msg = await client.futures_historical_klines(symbol=pair, interval=timeframe, start_str=get_startDate, end_str=None)
-            # data = self.get_data_frame(symbol=pair, msg=msg)
-            # data2 = self.get_data_frame2(symbol=pair, msg=msg) 
+            data = self.get_data_frame(symbol=pair, msg=msg)
+            data2 = self.get_data_frame2(symbol=pair, msg=msg) 
             self.Pattern_Detect()
             current_datetime = datetime.now()
             print(f'\nRetrieving Historical data from Binance for: {pair, timeframe} \n')
@@ -105,7 +118,7 @@ class PatternDetect:
 #=====================================================================================================================
 
     def get_data_frame(self, symbol, msg):
-        global rows_count, df, volume, high, close, gf
+        global rows_count, df, volume, high, close
 
         df = pd.DataFrame(msg)
         df.columns = ['Time','Open', 'High', 'Low', 'Close', 'Volume','CloseTime', 'qav','num_trades','taker_base_vol', 'taker_quote_vol', 'ignore']
@@ -123,7 +136,20 @@ class PatternDetect:
         gf["Low"] = gf["Low"].astype(float)
 
         return df
-    
+
+    def get_data_frame(self, symbol, msg):
+        global gf
+
+        gf = pd.DataFrame(msg)
+        gf.columns = ['Time','Open', 'High', 'Low', 'Close', 'Volume','CloseTime', 'qav','num_trades','taker_base_vol', 'taker_quote_vol', 'ignore']
+        gf = gf.loc[:, ['Time','Open', 'High', 'Low', 'Close', 'Volume']]
+        gf["Open"] = gf["Open"].astype(float)
+        gf["High"] = gf["High"].astype(float)
+        gf["Low"] = gf["Low"].astype(float)
+        gf["Close"] = gf["Close"].astype(float)
+
+        return gf
+        
 #=====================================================================================================================
 
     def Pattern_Detect(self):
@@ -295,6 +321,8 @@ class PatternDetect:
                 self.pp.to_string()
             )  
 
+
+    
     # Function to insert the "pp" data into the "bnb" table
     def insert_pp_to_database(self):
         try:
@@ -329,6 +357,41 @@ class PatternDetect:
         finally:
             print('Data inserted successfully!')
 
+    # Function to insert the "pp" data into the "bnb" table
+    def insert_pp_to_database2(self):
+        try:
+
+            btc_futures_price = get_current_btc_futures_price()
+
+            # Open a connection to the PostgreSQL database
+            connection = psycopg2.connect(
+                host=HOST,
+                database=DATABASE,
+                user=USER,
+                password=PASSWORD
+            )
+            cursor = connection.cursor()
+
+            # Iterate through each row of the "pp" dataframe and insert it into the "bnb" table
+            for index, row in self.pp.iterrows():
+                query = f"""
+                    INSERT INTO entries (pair, prophecy, entry, open, close)
+                    VALUES (
+                        '{pair}', {side}, {btc_futures_price}, '{row['Open']}', '{row['Close']}'
+                    )
+                """
+                cursor.execute(query)
+
+            # Commit the changes and close the connection
+            connection.commit()
+            cursor.close()
+            connection.close()
+
+        except (Exception, psycopg2.Error) as error:
+            print("Error inserting data:", error)
+            pass
+        finally:
+            print('Data inserted successfully!')
 
 def run_every_15_minutes():
     try:
@@ -364,6 +427,7 @@ if __name__ == '__main__':
     try:
         asyncio.get_event_loop().run_until_complete(pattern_detect.main())
         pattern_detect.insert_pp_to_database()
+        pattern_detect.insert_pp_to_database2()
         quit()
     except Exception as e:
         print("Error:", str(e))
